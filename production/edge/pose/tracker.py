@@ -16,6 +16,7 @@ import numpy as np
 from .filters import OneEuroArray
 from .occlusion import recover, update_bone_lengths
 from .skeleton import N_KPT, anatomical_validity, torso_size
+from .viewgeom import update_and_clamp
 
 HIGH_CONF = 0.50
 LOW_CONF = 0.20
@@ -42,6 +43,8 @@ class Track:
 
         self.filter = OneEuroArray(min_cutoff=1.2, beta=0.25)
         self.bone_len = {}
+        self.bone_hist = {}
+        self.last_bbox = det.get("bbox")
         self.kp = det["kp"].copy()
         self.inferred = np.zeros(N_KPT, bool)
         self.history = deque(maxlen=64)
@@ -82,6 +85,12 @@ class Track:
         kp[:, :2] = sm
         kp[:, 2] = filled[:, 2]
         kp[~valid, 2] = 0.0
+
+        # 시점-강건 사영 제약: 트랙 이력상 불가능하게 길어진 사지를 끌어당김.
+        bbox = det.get("bbox")
+        if bbox is not None:
+            self.last_bbox = bbox
+        kp, _ = update_and_clamp(kp, self.last_bbox, self.bone_hist)
 
         update_bone_lengths(self.bone_len, kp)
         self.kp = kp
