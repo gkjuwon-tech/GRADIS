@@ -18,6 +18,7 @@ Avatar Layer (v5 FK) — 추출 좌표(졸라맨)를 '회색 마네킹(형상)'�
   · head 외삽 축소 + 다리 깊이 EMA 강화 → 머리 흔들림·다리 앞뒤 떨림 억제.
 로드 1회: GLB 파싱 → 리그 자동감지 → 데시메이션 → 레스트 행렬 캐시.
 """
+import os
 import numpy as np
 import cv2
 from PIL import Image
@@ -295,6 +296,9 @@ class MannequinRenderer:
             add(j)
         self.hier_order = np.array(order, np.int64)
         self.hier_parent = np.array(par_k, np.int64)
+        self._facing = {}                            # pid -> facing EMA (+toward / -away)
+        self._facingsgn = {}                         # pid -> last hard facing sign
+        self._facing_fix = os.environ.get("GRADIS_NO_FACING_FIX") != "1"
         self._jparent = dict(zip(order, par_k))      # joint idx -> 부모 joint idx
         self._zstate = {}                            # pid -> {타깃키: z_prev} (3D 리프팅 상태)
         self._kpstate = {}                           # pid -> 평활된 kp (프레임 간 안정화)
@@ -453,7 +457,37 @@ class MannequinRenderer:
             ji = self._jparent.get(ji, -1)
         return 0.0
 
-    def _lift(self, tg, S, st, chain_parent, key_of_joint):
+    def _facing_sign(self, kp, pid):
+        """Estimate body facing (toward vs away from camera) and lock it in time.
+
+        Signal: screen-x ordering of L/R shoulders & hips. A body facing the
+        camera has its anatomical-left on the viewer's right (x_L > x_R); a body
+        turned away has that flipped. RTMPose's L/R labels are self-consistent
+        enough on top/oblique views to read facing, whereas facial-keypoint
+        confidence is NOT (the net hallucinates a face on the back of the head).
+        Returns +1.0 (toward camera) or -1.0 (facing away)."""
+        kp = np.asarray(kp, np.float32)
+        raw = 0.0
+        wsum = 0.0
+        for li, ri, w in ((LSHO, RSHO, 1.0), (LHIP, RHIP, 0.6)):
+            cl, cr = float(kp[li, 2]), float(kp[ri, 2])
+            if cl < _CONF or cr < _CONF:
+                continue
+            cw = w * min(cl, cr)
+            raw += cw * float(kp[li, 0] - kp[ri, 0])     # >0 toward, <0 away
+            wsum += cw
+        if len(self._facing) > 64:
+            self._facing.clear()
+        ema = self._facing.get(pid)
+        if wsum > 1e-6:
+            obs = raw / wsum
+            ema = obs if ema is None else 0.7 * ema + 0.3 * obs
+            self._facing[pid] = ema
+        if ema is None:
+            return 1.0
+        return 1.0 if ema >= 0.0 else -1.0
+
+    def _lift(self, tg, S, st, chain_parent, key_of_joint, facing=1.0):
         """2D 타깃 → 3D 타깃. 빠진 깊이는 본 길이 보존으로 복원한다.
 
         dz = sqrt(L² − |proj|²)   (L = 레스트 본길이 × S, proj = 2D 관측 세그먼트)
@@ -486,7 +520,7 @@ class MannequinRenderer:
             prev = st.get(k1)
             if prev is None:
                 # 첫 관측 기본 부호: 팔=카메라 쪽(몸 앞), 다리=몸 평면에 가까운 쪽
-                z = (zp if abs(zp) <= abs(zm) else zm) if leg else zp
+                z = base[2] + facing * dz             # pop limbs to the body-front side
             else:
                 z = zp if abs(zp - prev) <= abs(zm - prev) else zm
                 beta = 0.72 if leg else 0.55              # 다리는 더 끈적하게(앞뒤 떨림 억제)
@@ -495,7 +529,7 @@ class MannequinRenderer:
             t3[k1] = np.array([q1_2[0], q1_2[1], z], np.float32)
         return t3
 
-    def _root_rotation(self, t3, r0):
+    def _root_rotation(self, t3, r0, facing=1.0):
         """루트(골반) 3D 자세 — 몸통 up축 + 골반 좌우축으로 정면 방향까지 복원.
 
         side 벡터(왼엉덩이−오른엉덩이)가 '몸이 어딜 보는지'를 알려준다.
@@ -521,6 +555,11 @@ class MannequinRenderer:
             side_t = np.cross(up_t, np.array([0, 0, 1], np.float32))
             side_t /= max(np.linalg.norm(side_t), 1e-6)
         fwd_t = np.cross(side_t, up_t)
+        # lock forward depth sign (+z = toward camera) to the facing estimate;
+        # flipping side_t rotates the root 180 deg about up = front/back swap.
+        if facing * fwd_t[2] < 0.0:
+            side_t = -side_t
+            fwd_t = np.cross(side_t, up_t)
 
         # 레스트 기준 프레임 (스크린계)
         rb = {k: b for b, k, *_ in self.profile}
@@ -614,11 +653,15 @@ class MannequinRenderer:
         if len(self._zstate) > 64:
             self._zstate.clear()
         st = self._zstate.setdefault(pid, {})
-        t3 = self._lift(tg, S, st, chain_parent, key_of_joint)
+        f = self._facing_sign(kp, pid) if self._facing_fix else 1.0
+        if self._facingsgn.get(pid) not in (None, f):
+            st.clear()                                # facing flipped -> re-seed depth signs
+        self._facingsgn[pid] = f
+        t3 = self._lift(tg, S, st, chain_parent, key_of_joint, facing=f)
         if "neck" not in t3:
             return None
 
-        R_root = self._root_rotation(t3, r0)
+        R_root = self._root_rotation(t3, r0, facing=f)
         if R_root is None:
             return None
 
