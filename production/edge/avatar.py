@@ -741,6 +741,28 @@ class MannequinRenderer:
                              np.ones((len(self.verts), 1), np.float32)], 1)
         return np.einsum("vab,vb->va", Mv, vh)[:, :3]
 
+    @staticmethod
+    def _person_depth(kp):
+        """장면 깊이 프록시 — 값이 클수록 카메라에 가깝다(앞).
+
+        수직/비스듬 위 CCTV에서는 발·뒤꿈치 접지점이 낮을수록(화면 y 클수록)
+        카메라에 가깝다. 발 좌표가 신뢰 있으면 그걸, 아니면 보이는 최하단 관측점,
+        그것도 없으면 평균 y로 폴백. 정규화 [0,1] y."""
+        kp = np.asarray(kp, np.float32)
+        if kp.ndim != 2 or kp.shape[1] < 3:
+            return 0.0
+        conf = kp[:, 2] >= _CONF
+        foot = np.zeros(kp.shape[0], bool)
+        for i in (LANK, RANK, LFOOT, RFOOT):
+            if i < kp.shape[0]:
+                foot[i] = True
+        fc = conf & foot
+        if fc.any():
+            return float(kp[fc, 1].max())
+        if conf.any():
+            return float(kp[conf, 1].max())
+        return float(kp[:, 1].mean())
+
     def render_into(self, canvas_bgr, persons, supersample=1):
         """canvas_bgr: np.uint8[H,W,3] (in-place 합성). persons: [(id, kp25)].
         supersample>1: 오프라인 고품질 — sc배로 렌더 후 INTER_AREA 축소(계단·시임 제거).
@@ -750,6 +772,10 @@ class MannequinRenderer:
         sc = max(1, int(supersample))
         work = (cv2.resize(canvas_bgr, (W * sc, H * sc), interpolation=cv2.INTER_LINEAR)
                 if sc > 1 else canvas_bgr)
+        # 사람을 장면 깊이로 far→near 정렬 후 합성 — 트랙 리스트 순서는 깊이와
+        # 무관해 뒤 사람이 앞 사람 위에 덮였다(가림 반대). 가까운 사람을 마지막에
+        # 그려 앞 사람이 뒤 사람을 자연히 가리게 한다(사람별 공유 z-buffer 대용).
+        persons = sorted(persons, key=lambda pk: self._person_depth(pk[1]))
         for pid, kp in persons:
             v = self._skin(np.asarray(kp, np.float32), W, H, pid)
             if v is None:
