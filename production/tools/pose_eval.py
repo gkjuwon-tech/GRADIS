@@ -257,6 +257,12 @@ def main():
     ap.add_argument("--annotate", default=None, help="write skeleton overlay mp4")
     ap.add_argument("--lift", action="store_true",
                     help="apply VideoPose3D 3D lift + reproject refinement")
+    ap.add_argument("--rot-tta", action="store_true",
+                    help="top-view rotation test-time augmentation (0/45/.../315)")
+    ap.add_argument("--tta-angles", default=None,
+                    help="comma-separated TTA angles (deg), overrides --rot-tta default")
+    ap.add_argument("--tta-margin", type=float, default=0.35,
+                    help="bbox expansion margin for the rotated crop")
     ap.add_argument("--compare", nargs="+", help="print a comparison table of result JSONs and exit")
     args = ap.parse_args()
 
@@ -264,15 +270,22 @@ def main():
         _compare(args.compare)
         return
 
+    rot_tta = ()
+    if args.tta_angles:
+        rot_tta = tuple(int(a) for a in args.tta_angles.split(",") if a.strip())
+    elif args.rot_tta:
+        from edge.pose.backends import DEFAULT_ROT_TTA
+        rot_tta = DEFAULT_ROT_TTA
     bk = dict(detector_model=args.detector_model, pose_preset=args.pose_preset,
               pose_config=args.pose_config, pose_checkpoint=args.pose_checkpoint,
               imgsz=args.imgsz, conf=args.conf, tiles=args.tiles,
-              tracker=args.tracker)
+              tracker=args.tracker, rot_tta=rot_tta, tta_margin=args.tta_margin)
     res = evaluate(args.video, bk, max_frames=args.max_frames, start=args.start,
                    annotate=args.annotate, lift=args.lift)
     res["tag"] = args.tag or args.pose_preset
     res["config"] = {k: bk[k] for k in ("detector_model", "pose_preset", "imgsz",
                                         "conf", "tiles")}
+    res["config"]["rot_tta"] = list(rot_tta)
     print(json.dumps(res, indent=2, ensure_ascii=False))
     if args.out:
         json.dump(res, open(args.out, "w"), indent=2, ensure_ascii=False)

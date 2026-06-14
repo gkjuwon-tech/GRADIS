@@ -44,6 +44,9 @@ def main():
     ap.add_argument("--tracker", default="botsort.yaml")
     ap.add_argument("--imgsz", type=int, default=1280)
     ap.add_argument("--conf", type=float, default=0.35)
+    ap.add_argument("--rot-tta", action="store_true",
+                    help="top-view rotation test-time augmentation (0/45/.../315)")
+    ap.add_argument("--tta-margin", type=float, default=0.35)
     ap.add_argument("--tiles", type=int, default=1,
                     help=">1 enables NxN tile inference for small/distant people")
     ap.add_argument("--glb", default=os.path.join(HERE, "assets3d", "Xbot.glb"))
@@ -73,6 +76,8 @@ def main():
     # kp 캐시: YOLO 포즈 추출은 한 번만. 이후 렌더러 튜닝은 캐시로 재렌더(연산 최소화).
     model_tag = os.path.splitext(os.path.basename(args.detector_model))[0].replace(".", "_")
     cache_tag = f"{model_tag}_{args.pose_preset}_i{args.imgsz}_t{args.tiles}_c{args.conf:g}"
+    if args.rot_tta:
+        cache_tag += "_tta"
     cache_path = os.path.join(outdir, f"avatar_{base}_{cache_tag}_kp.npz")
     use_cache = (not args.no_cache) and args.single < 0 and os.path.exists(cache_path)
     cached = None
@@ -81,6 +86,7 @@ def main():
         backend = engine = None
         print(f"[avatar] kp 캐시 로드: {cache_path} ({len(cached)}f) — YOLO 스킵")
     else:
+        from edge.pose.backends import DEFAULT_ROT_TTA
         backend = make_backend("topview",
                                detector_model=args.detector_model,
                                pose_preset=args.pose_preset,
@@ -90,6 +96,8 @@ def main():
                                conf=args.conf,
                                tiles=args.tiles,
                                tracker=args.tracker,
+                               rot_tta=(DEFAULT_ROT_TTA if args.rot_tta else ()),
+                               tta_margin=args.tta_margin,
                                half=False)
         engine = SkeletonEngine(aerial=True, default_fps=fps)
     out_mp4 = os.path.join(outdir, f"avatar_{base}.mp4")

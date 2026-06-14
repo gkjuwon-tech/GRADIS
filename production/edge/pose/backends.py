@@ -20,7 +20,11 @@ import os
 from dataclasses import dataclass
 from typing import Iterable
 
+import cv2
 import numpy as np
+
+# Default in-plane rotations (deg, CCW) for top-view rotation TTA.
+DEFAULT_ROT_TTA = (0, 45, 90, 135, 180, 225, 270, 315)
 
 
 COCO_PERSON_CLASS_ID = 0
@@ -250,12 +254,25 @@ class MMPoseTopDownPose:
         checkpoint: str | None = None,
         preset: str = "rtmpose-m",
         device: str | None = None,
+        rot_tta: Iterable[int] | None = None,
+        tta_margin: float = 0.35,
+        tta_switch_margin: float = 0.03,
     ):
         if config is None or checkpoint is None:
             config, checkpoint = preset_paths(preset)
         self.config = _resolve_mmpose_config(config)
         self.checkpoint = checkpoint
         self.device = device or _auto_device()
+        # rotation TTA: empty/None disables it (default single-pass behavior).
+        self.rot_tta = tuple(int(a) % 360 for a in (rot_tta or ()))
+        # ensure the upright (0deg) pass is always evaluated as the reference.
+        if self.rot_tta and 0 not in self.rot_tta:
+            self.rot_tta = (0,) + self.rot_tta
+        self.tta_margin = float(tta_margin)
+        # only adopt a rotated pass if it beats the upright pass by this margin
+        # (mean keypoint score). Prevents per-frame angle flicker on bodies that
+        # are already upright, which would otherwise add jitter for no accuracy gain.
+        self.tta_switch_margin = float(tta_switch_margin)
         try:
             from mmpose.apis import inference_topdown, init_model
         except ImportError as e:
@@ -270,29 +287,20 @@ class MMPoseTopDownPose:
         if not boxes:
             return []
         height, width = frame_bgr.shape[:2]
-        bboxes = np.stack([b.xyxy for b in boxes]).astype(np.float32)
-        try:
-            samples = self._inference_topdown(self.model, frame_bgr, bboxes=bboxes)
-        except TypeError:
-            samples = self._inference_topdown(self.model, frame_bgr, bboxes)
+        if self.rot_tta:
+            kps_px = [self._tta_keypoints(frame_bgr, b.xyxy) for b in boxes]
+        else:
+            kps_px = self._infer_px(frame_bgr, [b.xyxy for b in boxes])
 
         dets = []
-        for i, sample in enumerate(samples):
-            pred = sample.pred_instances
-            keypoints = _as_float_array(pred.keypoints)
-            raw_scores = getattr(pred, "keypoint_scores", None)
-            scores = None if raw_scores is None else _as_float_array(raw_scores)
-            if keypoints.ndim == 3:
-                keypoints = keypoints[0]
-            if scores is not None and scores.ndim == 2:
-                scores = scores[0]
-            if keypoints.shape[0] < 17:
+        for i, box in enumerate(boxes):
+            keypoints = kps_px[i]
+            if keypoints is None or keypoints.shape[0] < 17:
                 continue
             kp = np.zeros((17, 3), np.float32)
             kp[:, 0] = np.clip(keypoints[:17, 0] / width, 0.0, 1.0)
             kp[:, 1] = np.clip(keypoints[:17, 1] / height, 0.0, 1.0)
-            kp[:, 2] = np.clip(scores[:17] if scores is not None else 1.0, 0.0, 1.0)
-            box = boxes[min(i, len(boxes) - 1)]
+            kp[:, 2] = np.clip(keypoints[:17, 2], 0.0, 1.0)
             dets.append(
                 {
                     "kp": kp,
@@ -302,6 +310,123 @@ class MMPoseTopDownPose:
                 }
             )
         return dets
+
+    def _run_topdown(self, image, bboxes: np.ndarray):
+        try:
+            return self._inference_topdown(self.model, image, bboxes=bboxes)
+        except TypeError:
+            return self._inference_topdown(self.model, image, bboxes)
+
+    @staticmethod
+    def _sample_kp(sample) -> np.ndarray | None:
+        """Extract a [17,3] (x,y,score) array in image-pixel coords."""
+        pred = sample.pred_instances
+        keypoints = _as_float_array(pred.keypoints)
+        raw_scores = getattr(pred, "keypoint_scores", None)
+        scores = None if raw_scores is None else _as_float_array(raw_scores)
+        if keypoints.ndim == 3:
+            keypoints = keypoints[0]
+        if scores is not None and scores.ndim == 2:
+            scores = scores[0]
+        if keypoints.shape[0] < 17:
+            return None
+        out = np.zeros((17, 3), np.float32)
+        out[:, :2] = keypoints[:17, :2]
+        out[:, 2] = scores[:17] if scores is not None else 1.0
+        return out
+
+    def _infer_px(self, image, bboxes_xyxy: list[np.ndarray]) -> list[np.ndarray | None]:
+        """Single-pass top-down inference; returns per-box [17,3] pixel keypoints."""
+        if not bboxes_xyxy:
+            return []
+        bboxes = np.stack(bboxes_xyxy).astype(np.float32)
+        samples = self._run_topdown(image, bboxes)
+        return [self._sample_kp(s) for s in samples]
+
+    @staticmethod
+    def _rotate_canvas(img, angle: float):
+        """Rotate img about its center by `angle` deg CCW, expanding the canvas.
+
+        Returns (rotated_img, M) where M is the 2x3 affine mapping src->dst.
+        """
+        h, w = img.shape[:2]
+        cx, cy = w / 2.0, h / 2.0
+        M = cv2.getRotationMatrix2D((cx, cy), angle, 1.0)
+        cos, sin = abs(M[0, 0]), abs(M[0, 1])
+        nw = int(h * sin + w * cos)
+        nh = int(h * cos + w * sin)
+        M[0, 2] += nw / 2.0 - cx
+        M[1, 2] += nh / 2.0 - cy
+        rot = cv2.warpAffine(img, M, (nw, nh), flags=cv2.INTER_LINEAR)
+        return rot, M
+
+    def _tta_keypoints(self, frame_bgr, box_xyxy) -> np.ndarray | None:
+        """Rotation TTA for one person: crop, rotate over angles, infer, un-rotate,
+        and keep the rotation whose mean keypoint score is highest.
+
+        Rationale (top-view): people lie/stand at arbitrary in-plane angles, but
+        COCO pose heads are trained on upright bodies. Rotating each crop toward
+        an upright orientation before inference sharpens keypoints instead of
+        hallucinating side-view limbs.
+        """
+        h, w = frame_bgr.shape[:2]
+        x0, y0, x1, y1 = [float(v) for v in box_xyxy]
+        bw, bh = x1 - x0, y1 - y0
+        if bw <= 1 or bh <= 1:
+            return None
+        mx, my = bw * self.tta_margin, bh * self.tta_margin
+        rx0, ry0 = max(0, int(x0 - mx)), max(0, int(y0 - my))
+        rx1, ry1 = min(w, int(x1 + mx)), min(h, int(y1 + my))
+        crop = frame_bgr[ry0:ry1, rx0:rx1]
+        if crop.size == 0:
+            return None
+        pb = np.array([x0 - rx0, y0 - ry0, x1 - rx0, y1 - ry0], np.float32)
+
+        upright_score: float | None = None
+        upright_kp: np.ndarray | None = None
+        best: tuple[float, np.ndarray] | None = None
+        for angle in self.rot_tta:
+            if angle % 360 == 0:
+                samples = self._run_topdown(crop, pb[None, :])
+                kp = self._sample_kp(samples[0]) if samples else None
+            else:
+                rot, M = self._rotate_canvas(crop, angle)
+                corners = np.array(
+                    [[pb[0], pb[1]], [pb[2], pb[1]], [pb[2], pb[3]], [pb[0], pb[3]]],
+                    np.float32,
+                )
+                rc = (M[:, :2] @ corners.T + M[:, 2:3]).T
+                pbr = np.array(
+                    [rc[:, 0].min(), rc[:, 1].min(), rc[:, 0].max(), rc[:, 1].max()],
+                    np.float32,
+                )
+                samples = self._run_topdown(rot, pbr[None, :])
+                kp = self._sample_kp(samples[0]) if samples else None
+                if kp is not None:
+                    Minv = cv2.invertAffineTransform(M)
+                    kp = kp.copy()
+                    kp[:, :2] = (Minv[:, :2] @ kp[:, :2].T + Minv[:, 2:3]).T
+            if kp is None:
+                continue
+            mean_score = float(np.mean(kp[:, 2]))
+            kp_frame = kp.copy()
+            kp_frame[:, 0] += rx0
+            kp_frame[:, 1] += ry0
+            if angle % 360 == 0:
+                upright_score = mean_score
+                upright_kp = kp_frame
+            if best is None or mean_score > best[0]:
+                best = (mean_score, kp_frame)
+        if best is None:
+            return None
+        # require a clear win over the upright pass before adopting a rotation.
+        if (
+            upright_kp is not None
+            and upright_score is not None
+            and best[0] < upright_score + self.tta_switch_margin
+        ):
+            return upright_kp
+        return best[1]
 
 
 def preset_paths(preset: str) -> tuple[str, str]:
@@ -340,6 +465,8 @@ class TopViewPoseBackend:
         half: bool = True,
         tiles: int = 1,
         topview_limb_conf: float = 0.35,
+        rot_tta: Iterable[int] | None = None,
+        tta_margin: float = 0.35,
     ):
         detector_model = model or detector_model
         self.detector = YoloPersonDetector(
@@ -357,6 +484,8 @@ class TopViewPoseBackend:
             checkpoint=pose_checkpoint,
             preset=pose_preset,
             device=device,
+            rot_tta=rot_tta,
+            tta_margin=tta_margin,
         )
         self.topview_limb_conf = float(topview_limb_conf)
 
