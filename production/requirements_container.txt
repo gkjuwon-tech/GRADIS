@@ -1,0 +1,22 @@
+# GRADIS top-view pose pipeline — CONTAINER / CPU path (no OpenMMLab build).
+#
+# This is the dependency set that actually runs the whole anonymization boundary
+# (detector -> RTMPose -> SkeletonEngine -> mannequin overlay) on a bare CPU box
+# with zero compilation: no mmcv source build, no mim, no CUDA required. RTMPose
+# runs through rtmlib + onnxruntime, whose ONNX weights download on first use.
+#
+# Verified on Python 3.11 (CPU). Install with:
+#   python -m pip install -r requirements_container.txt
+#
+# For the GPU/Colab MMPose path instead, use scripts/colab_topview_pose_setup.sh.
+
+torch==2.4.1
+torchvision==0.19.1
+ultralytics
+rtmlib
+onnxruntime
+opencv-python-headless
+numpy
+pillow
+scipy
+pygltflib

@@ -97,10 +97,15 @@ class Track:
 
 
 class MultiPersonTracker:
-    def __init__(self, max_age=12, gate=0.14):
+    def __init__(self, max_age=12, gate=0.14, spawn_conf=HIGH_CONF):
         self.tracks = []
         self.max_age = max_age
         self.gate = gate
+        # Minimum detection score to START a new track. Defaults to HIGH_CONF so
+        # existing callers are unchanged. Top-view people have legitimately lower
+        # keypoint confidence than frontal ones, so the top-view pipeline lowers
+        # this (without touching the high/low matching split below).
+        self.spawn_conf = float(spawn_conf)
 
     def update(self, detections, t, dt):
         dets = self._valid_detections(detections)
@@ -129,12 +134,18 @@ class MultiPersonTracker:
         for ti, di in m1:
             self.tracks[ti].update(high[di], t)
 
-        m2, _, _ = self._match(self.tracks, low, ut)
+        m2, _, ud_low = self._match(self.tracks, low, ut)
         for ti, di in m2:
             self.tracks[ti].update(low[di], t)
 
+        # Spawn from any unmatched detection above spawn_conf (not just >=HIGH_CONF),
+        # so lower-confidence top-view people still get a track instead of vanishing.
         for di in ud_high:
-            self.tracks.append(Track(high[di], t))
+            if high[di]["score"] >= self.spawn_conf:
+                self.tracks.append(Track(high[di], t))
+        for di in ud_low:
+            if low[di]["score"] >= self.spawn_conf:
+                self.tracks.append(Track(low[di], t))
 
         self.tracks = [tr for tr in self.tracks if tr.time_since_update <= self.max_age]
         return [

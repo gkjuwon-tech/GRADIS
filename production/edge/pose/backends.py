@@ -383,6 +383,15 @@ class TopViewPoseBackend:
 
 def make_backend(name: str = "topview", **kw):
     key = (name or "topview").lower()
+    if key in {"rtmpose-onnx", "onnx", "rtmlib", "rtmpose_onnx"}:
+        # No-OpenMMLab, container-runnable path (onnxruntime only).
+        from .rtmpose_onnx import RTMPoseOnnxBackend
+
+        allowed = {
+            "mode", "device", "backend", "det_conf",
+            "kpt_conf", "topview_limb_conf", "bbox_pad",
+        }
+        return RTMPoseOnnxBackend(**{k: v for k, v in kw.items() if k in allowed})
     if key in {"topview", "mmpose", "rtmpose", "vitpose"}:
         if key == "vitpose" and "pose_preset" not in kw:
             kw["pose_preset"] = "vitpose-s"

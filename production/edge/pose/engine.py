@@ -38,8 +38,10 @@ class Person:
 
 
 class SkeletonEngine:
-    def __init__(self, max_age=12, gate=0.14, aerial=True, default_fps=12):
-        self.tracker = MultiPersonTracker(max_age=max_age, gate=gate)
+    def __init__(self, max_age=12, gate=0.14, aerial=True, default_fps=12,
+                 spawn_conf=0.50):
+        self.tracker = MultiPersonTracker(max_age=max_age, gate=gate,
+                                          spawn_conf=spawn_conf)
         self.aerial = aerial
         self.dt_default = 1.0 / default_fps
         self._t_prev = None
