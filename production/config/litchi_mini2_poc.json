@@ -1,0 +1,69 @@
+﻿{
+  "platform": {
+    "name": "DJI Mini 2 + Litchi for DJI Drones",
+    "role": "PoC validation airframe. Litchi owns flight execution; GRADIS owns video AI, alerting, audit, and mission artifact generation.",
+    "control_link": "DJI RC-N1 controller + Android Litchi app. No local direct-control API is assumed.",
+    "video_link": "Litchi custom RTMP push to mediamtx, consumed by GRADIS as RTSP.",
+    "camera": "Mini 2 visible camera via Litchi live stream",
+    "max_flight_time_min": 31,
+    "outdoor_only": true
+  },
+  "runtime": {
+    "node_id": "GRADIS-MINI2-LITCHI-POC",
+    "core_url": "http://127.0.0.1:8088",
+    "rtmp_publish_url_local": "rtmp://<laptop-lan-ip>:1935/gradis-mini2",
+    "rtmp_publish_url_runpod_gateway": "rtmp://<laptop-lan-ip>:1935/gradis-mini2",
+    "video_source": {
+      "type": "rtsp",
+      "url": "rtsp://127.0.0.1:8554/gradis-mini2"
+    },
+    "pose": {
+      "backend": "topview",
+      "detector_model": "yolo11x.pt",
+      "detector_confidence": 0.25,
+      "detector_iou": 0.5,
+      "tracker": "botsort.yaml",
+      "imgsz": 1280,
+      "tiles": 1,
+      "pose_preset": "rtmpose-m",
+      "quality_preset": "vitpose-s",
+      "skeleton_format": "GRADIS-25"
+    },
+    "vlm": {
+      "backend": "ollama",
+      "model": "qwen2.5vl:3b",
+      "host": "http://localhost:11434",
+      "interval_s": 2.0,
+      "risk_threshold": 0.6,
+      "avatar": true,
+      "avatar_glb": "assets3d/Xbot.glb",
+      "tools_enabled": [
+        "autopilot",
+        "goto",
+        "orbit",
+        "rth",
+        "zoom"
+      ]
+    }
+  },
+  "mission": {
+    "default_alt_m": 20,
+    "default_speed_m_s": 3.0,
+    "gimbal_pitch_deg": -45,
+    "altitude_mode": 0,
+    "patrol_box_m": 60,
+    "home": {
+      "lat": 37.52860,
+      "lon": 126.96520,
+      "notes": "Replace with the real takeoff location before generating the final Litchi mission."
+    },
+    "safety": {
+      "low_battery_pct": 35,
+      "critical_battery_pct": 25,
+      "geofence_radius_m": 120,
+      "min_rc_link": "continuous",
+      "rth_alt_m": 30,
+      "privacy_mode": "redact_people_before_vlm + avatar"
+    }
+  }
+}

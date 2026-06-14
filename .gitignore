@@ -1,0 +1,55 @@
+# Python / editor noise
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+.idea/
+.vscode/
+
+# Generated outputs and debug artifacts
+outputs/
+production/outputs/
+production/_debug_frame_sheets/
+production/_*.png
+production/_qcompare*.png
+production/_upright_vs_fk.png
+production/dist/
+
+# Large media, model weights, and local runtime binaries
+*.pt
+*.pth
+*.onnx
+*.engine
+*.elf
+*.gradispack
+*.mp4
+*.avi
+*.mov
+*.mpg
+*.mkv
+*.gif
+*.zip
+*.7z
+*.rar
+*.exe
+*.dll
+
+# Local media and external checkouts
+production/_media/
+production/_external/
+tools_bin/
+
+# Local logs / temp
+*.log
+*.tmp
+*.bak
+*.npz
+*.db
+*.db-shm
+*.db-wal
+fuckgpt.txt

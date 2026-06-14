@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GRADIS — Detect First. Save More.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<script src="i18n.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="nav" id="top">
+  <div class="wrap nav-inner">
+    <a class="logo" href="#top">GRADIS</a>
+    <nav class="nav-links">
+      <a href="#solution" data-i18n="nav.product">Product</a>
+      <a href="#technology" data-i18n="nav.tech">Technology</a>
+      <a href="#how" data-i18n="nav.how">How It Works</a>
+      <a href="#impact" data-i18n="nav.impact">Impact</a>
+      <a href="#contact" data-i18n="nav.company">Company</a>
+    </nav>
+    <div class="nav-right">
+      <select class="lang-select" id="langSelect" aria-label="Language"></select>
+      <a href="#contact" class="btn btn-yellow btn-sm" data-i18n="cta.demo">Request Demo</a>
+    </div>
+  </div>
+</header>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <img class="hero-bg" src="assets/hero.png" alt="" />
+  <div class="hero-overlay"></div>
+  <div class="wrap hero-inner">
+    <div class="hero-eyebrow" data-i18n="hero.eyebrow">AUTONOMOUS PUBLIC-SAFETY DRONE PLATFORM</div>
+    <h1 class="hero-title" data-i18n="hero.title">
+      Detect First.<br />
+      <span class="accent">Save More.</span>
+    </h1>
+    <p class="hero-sub" data-i18n="hero.sub">
+      AI-powered autonomous drones that detect<br />
+      critical incidents before they are reported.
+    </p>
+    <div class="hero-cta">
+      <a href="#" class="btn btn-yellow"><span data-i18n="cta.demo2">Request a Demo</span> <span class="arr">&rarr;</span></a>
+      <a href="#how" class="btn-text"><span data-i18n="hero.cta2">See How It Works</span> <span class="circle-plus">+</span></a>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num accent">24/7</div>
+        <div class="stat-label" data-i18n="stat1">Autonomous Monitoring</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">&lt;3s</div>
+        <div class="stat-label" data-i18n="stat2">AI Incident Detection</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">0</div>
+        <div class="stat-label" data-i18n="stat3">Stored Normal Footage</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num accent" data-i18n="stat4num">Real-time</div>
+        <div class="stat-label" data-i18n="stat4">Alerts to Responders</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== THE PROBLEM ===== -->
+<section class="problem">
+  <div class="wrap">
+    <div class="problem-head">
+      <div class="problem-left">
+        <div class="eyebrow" data-i18n="prob.eyebrow">THE PROBLEM</div>
+        <h2 class="section-title" data-i18n="prob.title">
+          Incidents Happen.<br />
+          But Not All Are Seen.
+        </h2>
+      </div>
+      <div class="problem-right">
+        <p data-i18n="prob.p1">Emergencies and crimes often occur in blind spots&mdash; parks, riverbanks, campus paths, and urban perimeters.</p>
+        <p data-i18n="prob.p2">Traditional systems rely on reports. By the time someone calls, it&rsquo;s already too late.</p>
+      </div>
+    </div>
+  </div>
+  <div class="thumb-strip">
+    <figure><img src="assets/park_track1.png" alt="Surveillance feed" /></figure>
+    <figure><img src="assets/park_track2.png" alt="Surveillance feed" /></figure>
+    <figure><img src="assets/park_trees.png" alt="Surveillance feed" /></figure>
+    <figure><img src="assets/park_track3.png" alt="Surveillance feed" /></figure>
+  </div>
+</section>
+
+<!-- ===== OUR SOLUTION ===== -->
+<section class="solution" id="solution">
+  <div class="wrap">
+    <div class="eyebrow" data-i18n="sol.eyebrow">OUR SOLUTION</div>
+    <h2 class="section-title" data-i18n="sol.title">
+      GRADIS Sees First.<br />
+      So You Can Act Faster.
+    </h2>
+
+    <div class="solution-grid">
+      <div class="features">
+        <div class="feature">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="5" cy="5" r="2.2"/><circle cx="19" cy="5" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="19" cy="19" r="2.2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M7 7l2 2M17 7l-2 2M7 17l2-2M17 17l-2-2"/></svg>
+          </div>
+          <div>
+            <h3 data-i18n="f1t">Autonomous Aerial Patrols</h3>
+            <p data-i18n="f1d">Drones patrol high-risk areas 24/7.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="5" r="2"/><path d="M12 7v5M12 9l-4 2M12 9l4 2M12 12l-3 6M12 12l3 6"/></svg>
+          </div>
+          <div>
+            <h3 data-i18n="f2t">AI-Powered Mannequin Analysis</h3>
+            <p data-i18n="f2d">Detects abnormal behaviors in real time without identifying individuals.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><circle cx="12" cy="11" r="2.2"/><path d="M8.5 11a3.5 3.5 0 007 0"/></svg>
+          </div>
+          <div>
+            <h3 data-i18n="f3t">Privacy-First by Design</h3>
+            <p data-i18n="f3d">No face recognition. No identity tracking. Every person is replaced by a 3D mannequin &mdash; only that is analyzed.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+          </div>
+          <div>
+            <h3 data-i18n="f4t">Instant Alerts with Context</h3>
+            <p data-i18n="f4d">When a potential incident is detected, alerts with video clips are sent to authorities in seconds.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="solution-visual">
+        <img src="assets/fight2.png" alt="Aerial mannequin analysis" />
+        <div class="incident-card">
+          <div class="ic-title" data-i18n="ic.title">Incident Detected</div>
+          <div class="ic-behavior"><span data-i18n="ic.behavior">Abnormal Behavior:</span> <strong data-i18n="ic.fight">Fight</strong></div>
+          <dl class="ic-meta">
+            <div><dt data-i18n="ic.time">Time</dt><dd>14:32:31</dd></div>
+            <div><dt data-i18n="ic.loc">Location</dt><dd>Riverside Park Area 2</dd></div>
+            <div><dt data-i18n="ic.conf">Confidence</dt><dd>92%</dd></div>
+          </dl>
+          <a href="#" class="btn btn-yellow btn-block"><span data-i18n="ic.send">Send Alert</span> <span class="arr">&rarr;</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TECHNOLOGY ===== -->
+<section class="tech" id="technology">
+  <div class="wrap">
+    <div class="tech-head">
+      <div>
+        <div class="eyebrow" data-i18n="tech.eyebrow">TECHNOLOGY</div>
+        <h2 class="section-title" data-i18n="tech.title">
+          Anonymized at the Source.<br />
+          Judged on the Edge.
+        </h2>
+      </div>
+      <p class="tech-lead" data-i18n="tech.lead">
+        Faces never leave the sensor. GRADIS replaces every person with a
+        rigged 3D mannequin that mirrors their pose in real time, then lets
+        AI reason about the scene &mdash; not the identity.
+      </p>
+    </div>
+
+    <div class="tech-grid">
+      <figure class="tech-visual">
+        <img src="assets/avatar_live.gif" alt="Live 3D mannequin overlay on real footage" />
+      </figure>
+
+      <div class="tech-list">
+        <div class="tech-item">
+          <div class="tech-num">01</div>
+          <div>
+            <h3 data-i18n="t1t">GRADIS-25 Mannequin Rig</h3>
+            <p data-i18n="t1d">17 detected joints extended with a derived spine line and
+            hand &amp; foot endpoints &mdash; precise enough to read a raised arm,
+            a collapsing torso, or a body over a ledge.</p>
+          </div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-num">02</div>
+          <div>
+            <h3 data-i18n="t2t">Occlusion-Aware Tracking</h3>
+            <p data-i18n="t2d">Identity-stable multi-person tracking with mannequin
+            reconstruction through crowds, trees, and partial views.
+            Aggressor and victim never swap.</p>
+          </div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-num">03</div>
+          <div>
+            <h3 data-i18n="t3t">On-Device Scene Judgment</h3>
+            <p data-i18n="t3d">An embedded vision-language model assesses the redacted
+            scene &mdash; context, posture, environment &mdash; and escalates only
+            credible risk. No cloud round-trips. No raw video uploads.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-strip">
+      <div class="spec"><div class="spec-num">25</div><div class="spec-label" data-i18n="spec1">Joints Tracked per Person</div></div>
+      <div class="spec"><div class="spec-num">0</div><div class="spec-label" data-i18n="spec2">Faces Stored or Analyzed</div></div>
+      <div class="spec"><div class="spec-num">&lt;3s</div><div class="spec-label" data-i18n="spec3">Detection to Alert</div></div>
+      <div class="spec"><div class="spec-num">100%</div><div class="spec-label" data-i18n="spec4">On-Device Inference</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="eyebrow" data-i18n="how.eyebrow">HOW IT WORKS</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="5" cy="6" r="1.8"/><circle cx="19" cy="6" r="1.8"/><rect x="9.5" y="10" width="5" height="4" rx="1"/><path d="M6.5 7.5 9 10M17.5 7.5 15 10"/></svg></div>
+        <h4 data-i18n="st1t">Drone Patrol</h4>
+        <p data-i18n="st1d">Autonomous flight across monitored zones</p>
+      </div>
+      <div class="step-arrow">&rarr;</div>
+      <div class="step">
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="7" width="13" height="10" rx="1.5"/><path d="M16 10l5-3v10l-5-3z"/></svg></div>
+        <h4 data-i18n="st2t">Video Capture</h4>
+        <p data-i18n="st2d">Real-time video streaming</p>
+      </div>
+      <div class="step-arrow">&rarr;</div>
+      <div class="step">
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 8V5h3M20 8V5h-3M4 16v3h3M20 16v3h-3"/><circle cx="12" cy="9" r="1.6"/><path d="M12 11v4M12 12l-2.5 1.5M12 12l2.5 1.5"/></svg></div>
+        <h4 data-i18n="st3t">Mannequin Analysis</h4>
+        <p data-i18n="st3d">AI analyzes human pose and movement</p>
+      </div>
+      <div class="step-arrow">&rarr;</div>
+      <div class="step">
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5M12 15.5v.5"/></svg></div>
+        <h4 data-i18n="st4t">Incident Detected</h4>
+        <p data-i18n="st4d">Abnormal behavior identified</p>
+      </div>
+      <div class="step-arrow">&rarr;</div>
+      <div class="step">
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="5" width="14" height="10" rx="1.5"/><path d="M7 19h6M10 15v4"/><path d="M16 8l3-3 2 2-3 3z"/></svg></div>
+        <h4 data-i18n="st5t">Alert &amp; Verification</h4>
+        <p data-i18n="st5d">Video clip sent to control center</p>
+      </div>
+      <div class="step-arrow">&rarr;</div>
+      <div class="step">
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="8" r="3"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg></div>
+        <h4 data-i18n="st6t">Respond</h4>
+        <p data-i18n="st6d">Authorities assess and take action</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SAFER COMMUNITIES ===== -->
+<section class="communities" id="impact">
+  <div class="comm-img"><img src="assets/city_night.png" alt="City at night" /></div>
+  <div class="comm-text">
+    <div class="eyebrow" data-i18n="comm.eyebrow">BUILT FOR SAFER COMMUNITIES</div>
+    <h2 class="section-title" data-i18n="comm.title">From Prevention<br />to Protection.</h2>
+    <p data-i18n="comm.p">GRADIS helps cities, campuses, and critical infrastructure teams prevent tragedies and respond faster &mdash; with intelligence that doesn&rsquo;t invade privacy.</p>
+    <a href="#" class="btn btn-yellow"><span data-i18n="cta.demo2">Request a Demo</span> <span class="arr">&rarr;</span></a>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer" id="contact">
+  <div class="wrap footer-inner">
+    <div class="foot-brand">
+      <div class="logo">GRADIS</div>
+      <div class="foot-tag" data-i18n="foot.tag">Detect First. Save More.</div>
+    </div>
+    <nav class="foot-links">
+      <a href="#solution" data-i18n="nav.product">Product</a>
+      <a href="#technology" data-i18n="nav.tech">Technology</a>
+      <a href="#how" data-i18n="nav.how">How It Works</a>
+      <a href="#impact" data-i18n="nav.impact">Impact</a>
+    </nav>
+    <div class="foot-contact">
+      <div class="foot-contact-label" data-i18n="foot.contact">Contact Sales</div>
+      <a href="mailto:hello@gradis.ai">hello@gradis.ai</a>
+    </div>
+  </div>
+  <div class="wrap foot-bottom">
+    <div>&copy; 2026 GRADIS Inc. All rights reserved.</div>
+    <nav class="foot-legal">
+      <a href="#" data-i18n="legal1">Privacy by Design</a>
+      <a href="#" data-i18n="legal2">Responsible AI</a>
+      <a href="#" data-i18n="legal3">Terms</a>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>

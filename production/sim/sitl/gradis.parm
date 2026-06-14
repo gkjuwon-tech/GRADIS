@@ -1,0 +1,13 @@
+# GRADIS SITL 오버레이 파라미터 (copter.parm 위에 적용)
+# 시뮬 전용 — 실기체에 절대 그대로 쓰지 말 것 (ARMING_CHECK!)
+ARMING_CHECK    0
+GPS_TYPE        1
+FRAME_CLASS     1
+FRAME_TYPE      1
+# 소형 기체 느낌의 기동성 (Defender 25 근사)
+WPNAV_SPEED     800
+WPNAV_ACCEL     250
+ANGLE_MAX       3500
+# 배터리 시뮬: 잔량 기반 페일세이프는 companion이 처리
+BATT_MONITOR    4
+SIM_SPEEDUP     1

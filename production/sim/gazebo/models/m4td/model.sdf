@@ -1,0 +1,280 @@
+<?xml version="1.0"?>
+<!--
+  DJI Matrice 4TD 디지털 트윈 (GRADIS)
+
+  실스펙 반영: 중량 1.85 kg (MTOW 2.09 kg), 컴팩트 쿼드(모터간 ~0.46 m),
+  3축 짐벌(광각48MP+텔레+열화상 640x512+LRF)을 전방 하부에 장착.
+  비행역학: DJI 자율 스택은 비공개이므로 ArduPilot SITL이 대역(standin).
+  ⚠️ LiftDrag 계수는 1차 추정 — 첫 호버에서 MOT_THST_HOVER와 함께 튜닝.
+-->
+<sdf version="1.9">
+  <model name="m4td">
+    <pose>0 0 0.12 0 0 0</pose>
+
+    <!-- ===================== 기체 본체 ===================== -->
+    <link name="base_link">
+      <inertial>
+        <mass>1.69</mass> <!-- 본체+배터리 (로터 4x0.04 제외) -->
+        <inertia>
+          <ixx>0.021</ixx><iyy>0.021</iyy><izz>0.036</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+        </inertia>
+      </inertial>
+
+      <visual name="fuselage">
+        <geometry><box><size>0.28 0.14 0.09</size></box></geometry>
+        <material><ambient>0.16 0.17 0.18 1</ambient><diffuse>0.32 0.33 0.35 1</diffuse></material>
+      </visual>
+      <collision name="fuselage_col">
+        <geometry><box><size>0.28 0.14 0.09</size></box></geometry>
+      </collision>
+
+      <!-- 4 폴딩암 -->
+      <visual name="arm_fr"><pose>0.082 -0.082 0.02 0 0 -0.785</pose>
+        <geometry><box><size>0.22 0.025 0.018</size></box></geometry>
+        <material><diffuse>0.2 0.2 0.22 1</diffuse></material></visual>
+      <visual name="arm_fl"><pose>0.082 0.082 0.02 0 0 0.785</pose>
+        <geometry><box><size>0.22 0.025 0.018</size></box></geometry>
+        <material><diffuse>0.2 0.2 0.22 1</diffuse></material></visual>
+      <visual name="arm_br"><pose>-0.082 -0.082 0.02 0 0 0.785</pose>
+        <geometry><box><size>0.22 0.025 0.018</size></box></geometry>
+        <material><diffuse>0.2 0.2 0.22 1</diffuse></material></visual>
+      <visual name="arm_bl"><pose>-0.082 0.082 0.02 0 0 -0.785</pose>
+        <geometry><box><size>0.22 0.025 0.018</size></box></geometry>
+        <material><diffuse>0.2 0.2 0.22 1</diffuse></material></visual>
+
+      <!-- 상부 RTK 돔 + 전방위 비전 센서 표식 -->
+      <visual name="rtk_dome"><pose>0 0 0.055 0 0 0</pose>
+        <geometry><cylinder><radius>0.022</radius><length>0.02</length></cylinder></geometry>
+        <material><diffuse>0.5 0.5 0.52 1</diffuse></material></visual>
+      <visual name="vision_front"><pose>0.142 0 0.01 0 1.5708 0</pose>
+        <geometry><cylinder><radius>0.009</radius><length>0.004</length></cylinder></geometry>
+        <material><diffuse>0.02 0.02 0.05 1</diffuse></material></visual>
+
+      <!-- 랜딩 레그 -->
+      <visual name="leg_l"><pose>0 0.06 -0.07 0.3 0 0</pose>
+        <geometry><cylinder><radius>0.006</radius><length>0.08</length></cylinder></geometry>
+        <material><diffuse>0.18 0.18 0.18 1</diffuse></material></visual>
+      <visual name="leg_r"><pose>0 -0.06 -0.07 -0.3 0 0</pose>
+        <geometry><cylinder><radius>0.006</radius><length>0.08</length></cylinder></geometry>
+        <material><diffuse>0.18 0.18 0.18 1</diffuse></material></visual>
+      <collision name="legs_col"><pose>0 0 -0.1 0 0 0</pose>
+        <geometry><box><size>0.14 0.16 0.02</size></box></geometry></collision>
+
+      <sensor name="imu_sensor" type="imu">
+        <pose>0 0 0 3.141593 0 0</pose>
+        <always_on>1</always_on>
+        <update_rate>1000</update_rate>
+      </sensor>
+    </link>
+
+    <!-- ============ 짐벌 (광각+텔레+열화상+LRF, 전방 하향 ~55°) ============ -->
+    <link name="gimbal_link">
+      <pose>0.13 0 -0.07 0 0.96 0</pose>
+      <inertial>
+        <mass>0.16</mass>
+        <inertia><ixx>0.0001</ixx><iyy>0.0001</iyy><izz>0.0001</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+      </inertial>
+      <visual name="gimbal_body">
+        <geometry><sphere><radius>0.032</radius></sphere></geometry>
+        <material><diffuse>0.12 0.12 0.12 1</diffuse></material>
+      </visual>
+      <visual name="lens_wide">
+        <pose>0.03 0.008 0 0 1.5708 0</pose>
+        <geometry><cylinder><radius>0.009</radius><length>0.012</length></cylinder></geometry>
+        <material><diffuse>0.02 0.02 0.05 1</diffuse></material>
+      </visual>
+      <visual name="lens_ir">
+        <pose>0.03 -0.012 0 0 1.5708 0</pose>
+        <geometry><cylinder><radius>0.006</radius><length>0.012</length></cylinder></geometry>
+        <material><diffuse>0.05 0.02 0.02 1</diffuse></material>
+      </visual>
+      <sensor name="eo_camera" type="camera">
+        <always_on>1</always_on>
+        <update_rate>15</update_rate>
+        <visualize>1</visualize>
+        <topic>eo_camera</topic>
+        <camera>
+          <horizontal_fov>1.15</horizontal_fov>
+          <image><width>640</width><height>360</height><format>R8G8B8</format></image>
+          <clip><near>0.1</near><far>800</far></clip>
+        </camera>
+      </sensor>
+    </link>
+    <joint name="gimbal_joint" type="fixed">
+      <parent>base_link</parent><child>gimbal_link</child>
+    </joint>
+
+    <!-- ===================== 로터 4개 ===================== -->
+    <!-- ArduPilot Quad-X: 0=FR(CCW) 1=BL(CCW) 2=FL(CW) 3=BR(CW) -->
+    <link name="rotor_0">
+      <pose>0.163 -0.163 0.045 0 0 0</pose>
+      <inertial><mass>0.04</mass>
+        <inertia><ixx>2e-5</ixx><iyy>3.2e-4</iyy><izz>3.3e-4</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+      <visual name="prop"><geometry><box><size>0.30 0.025 0.005</size></box></geometry>
+        <material><diffuse>0.85 0.74 0.28 1</diffuse></material></visual>
+      <collision name="prop_col"><geometry><box><size>0.30 0.025 0.005</size></box></geometry></collision>
+    </link>
+    <joint name="rotor_0_joint" type="revolute">
+      <parent>base_link</parent><child>rotor_0</child>
+      <axis><xyz>0 0 1</xyz><limit><lower>-1e16</lower><upper>1e16</upper></limit>
+        <dynamics><damping>0.002</damping></dynamics></axis>
+    </joint>
+
+    <link name="rotor_1">
+      <pose>-0.163 0.163 0.045 0 0 0</pose>
+      <inertial><mass>0.04</mass>
+        <inertia><ixx>2e-5</ixx><iyy>3.2e-4</iyy><izz>3.3e-4</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+      <visual name="prop"><geometry><box><size>0.30 0.025 0.005</size></box></geometry>
+        <material><diffuse>0.85 0.74 0.28 1</diffuse></material></visual>
+      <collision name="prop_col"><geometry><box><size>0.30 0.025 0.005</size></box></geometry></collision>
+    </link>
+    <joint name="rotor_1_joint" type="revolute">
+      <parent>base_link</parent><child>rotor_1</child>
+      <axis><xyz>0 0 1</xyz><limit><lower>-1e16</lower><upper>1e16</upper></limit>
+        <dynamics><damping>0.002</damping></dynamics></axis>
+    </joint>
+
+    <link name="rotor_2">
+      <pose>0.163 0.163 0.045 0 0 0</pose>
+      <inertial><mass>0.04</mass>
+        <inertia><ixx>2e-5</ixx><iyy>3.2e-4</iyy><izz>3.3e-4</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+      <visual name="prop"><geometry><box><size>0.30 0.025 0.005</size></box></geometry>
+        <material><diffuse>0.25 0.25 0.27 1</diffuse></material></visual>
+      <collision name="prop_col"><geometry><box><size>0.30 0.025 0.005</size></box></geometry></collision>
+    </link>
+    <joint name="rotor_2_joint" type="revolute">
+      <parent>base_link</parent><child>rotor_2</child>
+      <axis><xyz>0 0 1</xyz><limit><lower>-1e16</lower><upper>1e16</upper></limit>
+        <dynamics><damping>0.002</damping></dynamics></axis>
+    </joint>
+
+    <link name="rotor_3">
+      <pose>-0.163 -0.163 0.045 0 0 0</pose>
+      <inertial><mass>0.04</mass>
+        <inertia><ixx>2e-5</ixx><iyy>3.2e-4</iyy><izz>3.3e-4</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+      <visual name="prop"><geometry><box><size>0.30 0.025 0.005</size></box></geometry>
+        <material><diffuse>0.25 0.25 0.27 1</diffuse></material></visual>
+      <collision name="prop_col"><geometry><box><size>0.30 0.025 0.005</size></box></geometry></collision>
+    </link>
+    <joint name="rotor_3_joint" type="revolute">
+      <parent>base_link</parent><child>rotor_3</child>
+      <axis><xyz>0 0 1</xyz><limit><lower>-1e16</lower><upper>1e16</upper></limit>
+        <dynamics><damping>0.002</damping></dynamics></axis>
+    </joint>
+
+    <!-- ===================== 양력 모델 (LiftDrag) ===================== -->
+    <!-- 12" 프롭 추정: 1.85kg 호버 ~45% 스로틀 목표 1차 산정 -->
+    <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+      <a0>0.3</a0><cla>4.25</cla><cda>0.10</cda><cma>0</cma>
+      <alpha_stall>1.4</alpha_stall><cla_stall>-0.025</cla_stall>
+      <cda_stall>0.0</cda_stall><cma_stall>0</cma_stall>
+      <area>0.0035</area><air_density>1.2041</air_density>
+      <cp>0.075 0 0</cp><forward>1 0 0</forward><upward>0 0 1</upward>
+      <link_name>rotor_0</link_name>
+    </plugin>
+    <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+      <a0>0.3</a0><cla>4.25</cla><cda>0.10</cda><cma>0</cma>
+      <alpha_stall>1.4</alpha_stall><cla_stall>-0.025</cla_stall>
+      <cda_stall>0.0</cda_stall><cma_stall>0</cma_stall>
+      <area>0.0035</area><air_density>1.2041</air_density>
+      <cp>0.075 0 0</cp><forward>1 0 0</forward><upward>0 0 1</upward>
+      <link_name>rotor_1</link_name>
+    </plugin>
+    <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+      <a0>0.3</a0><cla>4.25</cla><cda>0.10</cda><cma>0</cma>
+      <alpha_stall>1.4</alpha_stall><cla_stall>-0.025</cla_stall>
+      <cda_stall>0.0</cda_stall><cma_stall>0</cma_stall>
+      <area>0.0035</area><air_density>1.2041</air_density>
+      <cp>-0.075 0 0</cp><forward>-1 0 0</forward><upward>0 0 1</upward>
+      <link_name>rotor_2</link_name>
+    </plugin>
+    <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+      <a0>0.3</a0><cla>4.25</cla><cda>0.10</cda><cma>0</cma>
+      <alpha_stall>1.4</alpha_stall><cla_stall>-0.025</cla_stall>
+      <cda_stall>0.0</cda_stall><cma_stall>0</cma_stall>
+      <area>0.0035</area><air_density>1.2041</air_density>
+      <cp>-0.075 0 0</cp><forward>-1 0 0</forward><upward>0 0 1</upward>
+      <link_name>rotor_3</link_name>
+    </plugin>
+
+    <plugin filename="gz-sim-apply-joint-force-system"
+            name="gz::sim::systems::ApplyJointForce">
+      <joint_name>rotor_0_joint</joint_name>
+    </plugin>
+    <plugin filename="gz-sim-apply-joint-force-system"
+            name="gz::sim::systems::ApplyJointForce">
+      <joint_name>rotor_1_joint</joint_name>
+    </plugin>
+    <plugin filename="gz-sim-apply-joint-force-system"
+            name="gz::sim::systems::ApplyJointForce">
+      <joint_name>rotor_2_joint</joint_name>
+    </plugin>
+    <plugin filename="gz-sim-apply-joint-force-system"
+            name="gz::sim::systems::ApplyJointForce">
+      <joint_name>rotor_3_joint</joint_name>
+    </plugin>
+    <plugin filename="gz-sim-joint-state-publisher-system"
+            name="gz::sim::systems::JointStatePublisher">
+    </plugin>
+
+    <!-- ===================== ArduPilot FDM 브리지 ===================== -->
+    <!-- SITL: sim_vehicle.py -v ArduCopter -f JSON (model JSON, ardupilot_gazebo 빌드) -->
+    <plugin name="ArduPilotPlugin" filename="ArduPilotPlugin">
+      <fdm_addr>127.0.0.1</fdm_addr>
+      <fdm_port_in>9002</fdm_port_in>
+      <connectionTimeoutMaxCount>5</connectionTimeoutMaxCount>
+      <lock_step>1</lock_step>
+      <have_32_channels>0</have_32_channels>
+      <modelXYZToAirplaneXForwardZDown>0 0 0 3.141593 0 0</modelXYZToAirplaneXForwardZDown>
+      <gazeboXYZToNED>0 0 0 3.141593 0 1.5708</gazeboXYZToNED>
+      <imuName>base_link::imu_sensor</imuName>
+
+      <control channel="0">
+        <jointName>rotor_0_joint</jointName>
+        <useForce>1</useForce>
+        <multiplier>1100</multiplier><offset>0</offset>
+        <servo_min>1100</servo_min><servo_max>1900</servo_max>
+        <type>VELOCITY</type>
+        <p_gain>0.20</p_gain><i_gain>0</i_gain><d_gain>0</d_gain>
+        <i_max>0</i_max><i_min>0</i_min>
+        <cmd_max>2.0</cmd_max><cmd_min>-2.0</cmd_min>
+      </control>
+      <control channel="1">
+        <jointName>rotor_1_joint</jointName>
+        <useForce>1</useForce>
+        <multiplier>1100</multiplier><offset>0</offset>
+        <servo_min>1100</servo_min><servo_max>1900</servo_max>
+        <type>VELOCITY</type>
+        <p_gain>0.20</p_gain><i_gain>0</i_gain><d_gain>0</d_gain>
+        <i_max>0</i_max><i_min>0</i_min>
+        <cmd_max>2.0</cmd_max><cmd_min>-2.0</cmd_min>
+      </control>
+      <control channel="2">
+        <jointName>rotor_2_joint</jointName>
+        <useForce>1</useForce>
+        <multiplier>-1100</multiplier><offset>0</offset>
+        <servo_min>1100</servo_min><servo_max>1900</servo_max>
+        <type>VELOCITY</type>
+        <p_gain>0.20</p_gain><i_gain>0</i_gain><d_gain>0</d_gain>
+        <i_max>0</i_max><i_min>0</i_min>
+        <cmd_max>2.0</cmd_max><cmd_min>-2.0</cmd_min>
+      </control>
+      <control channel="3">
+        <jointName>rotor_3_joint</jointName>
+        <useForce>1</useForce>
+        <multiplier>-1100</multiplier><offset>0</offset>
+        <servo_min>1100</servo_min><servo_max>1900</servo_max>
+        <type>VELOCITY</type>
+        <p_gain>0.20</p_gain><i_gain>0</i_gain><d_gain>0</d_gain>
+        <i_max>0</i_max><i_min>0</i_min>
+        <cmd_max>2.0</cmd_max><cmd_min>-2.0</cmd_min>
+      </control>
+    </plugin>
+  </model>
+</sdf>

@@ -1,0 +1,18 @@
+# GRADIS M4TD 디지털 트윈 SITL 오버레이 (Gazebo JSON FDM)
+# 시뮬 전용 — 실기체(M4TD)는 DJI 자율 스택이라 파라미터 무관
+ARMING_CHECK    0
+FRAME_CLASS     1
+FRAME_TYPE      1
+# 1.85kg 컴팩트 쿼드 1차 추정 — 첫 호버에서 학습값으로 갱신
+MOT_THST_HOVER  0.35
+MOT_THST_EXPO   0.65
+# M4TD급 기동 (최대 21m/s 기체 → 순찰 10m/s 보수 운용)
+WPNAV_SPEED     1000
+WPNAV_ACCEL     250
+WPNAV_SPEED_DN  150
+ANGLE_MAX       3000
+PILOT_SPEED_UP  300
+RTL_ALT         4000
+LAND_SPEED      35
+BATT_MONITOR    4
+SIM_SPEEDUP     1

@@ -1,0 +1,82 @@
+﻿{
+  "platform": {
+    "name": "iFlight Defender 25 O4 4S HD",
+    "source_urls": [
+      "https://shop.iflight.com/Defender-25-O4-4S-HD-Pro2329",
+      "https://shop.iflight.com/Defender-25-F7-AIO-Pro1929",
+      "https://shop.iflight.com/Defender-25-Battery-Pro1925"
+    ],
+    "flight_electronics": "BLITZ D25 F7 AIO",
+    "flight_controller_firmware_target": "IFLIGHT_BLITZ_F722_X1",
+    "video_transmission": "DJI O4 Air Unit Pro",
+    "gnss": "GPS+SBAS+Galileo+QZSS+Glonass",
+    "aircraft_weight_g": "170 +/- 5",
+    "mtom_550mah_g": "240 +/- 5",
+    "mtom_900mah_g": "280 +/- 5",
+    "battery_stock": "4S 550mAh Li-Po",
+    "battery_optional": "4S 900mAh Li-Po"
+  },
+  "runtime": {
+    "node_id": "GRADIS-DEFENDER25-01",
+    "core_url": "http://127.0.0.1:8088",
+    "video_source": {
+      "type": "rtsp",
+      "url": "rtsp://127.0.0.1:8554/defender25"
+    },
+    "pose": {
+      "backend": "topview",
+      "detector_model": "yolo11x.pt",
+      "detector_confidence": 0.25,
+      "detector_iou": 0.5,
+      "tracker": "botsort.yaml",
+      "imgsz": 1280,
+      "tiles": 2,
+      "pose_preset": "rtmpose-m",
+      "quality_preset": "vitpose-s",
+      "skeleton_format": "GRADIS-25"
+    },
+    "vlm": {
+      "backend": "ollama",
+      "model": "moondream",
+      "host": "http://localhost:11434",
+      "prompt_file": "prompts/defender25_vlm_system.txt",
+      "interval_s": 1.0,
+      "risk_threshold": 0.6
+    }
+  },
+  "mission": {
+    "takeoff_alt_m": 25,
+    "patrol": [
+      { "lat": 37.52830, "lon": 126.96480, "alt_m": 25 },
+      { "lat": 37.52830, "lon": 126.96560, "alt_m": 25 },
+      { "lat": 37.52890, "lon": 126.96560, "alt_m": 25 },
+      { "lat": 37.52890, "lon": 126.96480, "alt_m": 25 }
+    ],
+    "charging_docks": [
+      {
+        "node_id": "DOCK-A",
+        "lat": 37.52860,
+        "lon": 126.96520,
+        "notes": "Primary fixed dock; replace with surveyed coordinates before field use."
+      }
+    ],
+    "safety": {
+      "low_battery_pct": 30,
+      "critical_battery_pct": 18,
+      "redeploy_battery_pct": 92,
+      "dock_approach_alt_m": 12,
+      "waypoint_reach_tolerance_m": 4,
+      "max_charge_wait_s": 7200,
+      "human_standoff_m": 6,
+      "geofence_radius_m": 300,
+      "mavlink_timeout_s": 5,
+      "privacy_mode": "redact_people_before_vlm"
+    }
+  },
+  "packaging": {
+    "format": "gradispack",
+    "include_pose_weights": [],
+    "include_large_models_by_default": false,
+    "model_bootstrap_script": "scripts/colab_topview_pose_setup.sh"
+  }
+}

@@ -1,0 +1,168 @@
+#VRML_SIM R2025a utf8
+# GRADIS — 관절 구동 휴머노이드 (시나리오 액터)
+#
+# 키 1.75m, 인체 비율 캡슐 림. fight_human 컨트롤러가 모터를 구동해
+# 실제 '관절 모션'으로 싸움/낙상/미동없음을 연기한다. 가짜 알람이 아니라
+# 드론 카메라가 진짜로 '보고', YOLO가 진짜로 스켈레톤을 뽑고, VLM이 진짜로
+# 판단해야 한다. (고품질 업그레이드: Mixamo/CMU BVH — README_SIM.md)
+#
+# 좌표계: 몸 기준 프레임 = 발바닥 원점, z 위. 모든 조인트는 anchor로 피벗 지정,
+# endPoint Solid는 부모 프레임 좌표를 그대로 쓴다(회전은 anchor 중심으로 적용).
+#
+# 관절(모터 이름):
+#   body_pitch       발목 기준 전신 기울기(낙상 연기)
+#   sho_l / sho_r    어깨 (시상면 스윙 = 펀치)
+#   elb_l / elb_r    팔꿈치
+#   hip_l / hip_r    고관절
+#   kne_l / kne_r    무릎
+
+PROTO FightHuman [
+  field SFVec3f    translation  0 0 0
+  field SFRotation rotation     0 0 1 0
+  field SFString   name         "human"
+  field SFString   controller   "fight_human"
+  field MFString   controllerArgs []
+  field SFColor    shirtColor   0.65 0.18 0.16
+  field SFColor    pantsColor   0.18 0.20 0.32
+  field SFColor    skinColor    0.85 0.65 0.52
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    name IS name
+    controller IS controller
+    controllerArgs IS controllerArgs
+    children [
+      HingeJoint {   # 전신 기울기 (발목 앵커) — 낙상 연기용
+        jointParameters HingeJointParameters { axis 0 1 0 anchor 0 0 0.05 }
+        device [ RotationalMotor { name "body_pitch" maxVelocity 8 minPosition -1.7 maxPosition 1.7 } ]
+        endPoint Solid {
+          children [
+            # ---- 몸통 / 머리 ----
+            Transform { translation 0 0 1.22 children [ Shape {
+              appearance PBRAppearance { baseColor IS shirtColor roughness 1 }
+              geometry Capsule { height 0.42 radius 0.14 }
+            } ] }
+            Transform { translation 0 0 1.62 children [ Shape {
+              appearance PBRAppearance { baseColor IS skinColor roughness 1 }
+              geometry Sphere { radius 0.105 }
+            } ] }
+
+            # ---- 왼다리 ----
+            HingeJoint {
+              jointParameters HingeJointParameters { axis 0 1 0 anchor 0 0.10 0.92 }
+              device [ RotationalMotor { name "hip_l" maxVelocity 10 minPosition -2.2 maxPosition 2.2 } ]
+              endPoint Solid {
+                children [
+                  Transform { translation 0 0.10 0.70 children [ Shape {
+                    appearance PBRAppearance { baseColor IS pantsColor roughness 1 }
+                    geometry Capsule { height 0.36 radius 0.075 }
+                  } ] }
+                  HingeJoint {
+                    jointParameters HingeJointParameters { axis 0 1 0 anchor 0 0.10 0.48 }
+                    device [ RotationalMotor { name "kne_l" maxVelocity 10 minPosition -2.4 maxPosition 0.1 } ]
+                    endPoint Solid {
+                      children [
+                        Transform { translation 0 0.10 0.27 children [ Shape {
+                          appearance PBRAppearance { baseColor IS pantsColor roughness 1 }
+                          geometry Capsule { height 0.34 radius 0.06 }
+                        } ] }
+                        Transform { translation 0.05 0.10 0.04 children [ Shape {
+                          appearance PBRAppearance { baseColor 0.1 0.1 0.1 roughness 1 }
+                          geometry Box { size 0.24 0.09 0.06 }
+                        } ] }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+
+            # ---- 오른다리 ----
+            HingeJoint {
+              jointParameters HingeJointParameters { axis 0 1 0 anchor 0 -0.10 0.92 }
+              device [ RotationalMotor { name "hip_r" maxVelocity 10 minPosition -2.2 maxPosition 2.2 } ]
+              endPoint Solid {
+                children [
+                  Transform { translation 0 -0.10 0.70 children [ Shape {
+                    appearance PBRAppearance { baseColor IS pantsColor roughness 1 }
+                    geometry Capsule { height 0.36 radius 0.075 }
+                  } ] }
+                  HingeJoint {
+                    jointParameters HingeJointParameters { axis 0 1 0 anchor 0 -0.10 0.48 }
+                    device [ RotationalMotor { name "kne_r" maxVelocity 10 minPosition -2.4 maxPosition 0.1 } ]
+                    endPoint Solid {
+                      children [
+                        Transform { translation 0 -0.10 0.27 children [ Shape {
+                          appearance PBRAppearance { baseColor IS pantsColor roughness 1 }
+                          geometry Capsule { height 0.34 radius 0.06 }
+                        } ] }
+                        Transform { translation 0.05 -0.10 0.04 children [ Shape {
+                          appearance PBRAppearance { baseColor 0.1 0.1 0.1 roughness 1 }
+                          geometry Box { size 0.24 0.09 0.06 }
+                        } ] }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+
+            # ---- 왼팔 ----
+            HingeJoint {
+              jointParameters HingeJointParameters { axis 0 1 0 anchor 0 0.20 1.42 }
+              device [ RotationalMotor { name "sho_l" maxVelocity 14 minPosition -3.2 maxPosition 3.2 } ]
+              endPoint Solid {
+                children [
+                  Transform { translation 0 0.20 1.27 children [ Shape {
+                    appearance PBRAppearance { baseColor IS shirtColor roughness 1 }
+                    geometry Capsule { height 0.24 radius 0.05 }
+                  } ] }
+                  HingeJoint {
+                    jointParameters HingeJointParameters { axis 0 1 0 anchor 0 0.20 1.12 }
+                    device [ RotationalMotor { name "elb_l" maxVelocity 14 minPosition -2.6 maxPosition 0.1 } ]
+                    endPoint Solid {
+                      children [
+                        Transform { translation 0 0.20 0.98 children [ Shape {
+                          appearance PBRAppearance { baseColor IS skinColor roughness 1 }
+                          geometry Capsule { height 0.22 radius 0.042 }
+                        } ] }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+
+            # ---- 오른팔 ----
+            HingeJoint {
+              jointParameters HingeJointParameters { axis 0 1 0 anchor 0 -0.20 1.42 }
+              device [ RotationalMotor { name "sho_r" maxVelocity 14 minPosition -3.2 maxPosition 3.2 } ]
+              endPoint Solid {
+                children [
+                  Transform { translation 0 -0.20 1.27 children [ Shape {
+                    appearance PBRAppearance { baseColor IS shirtColor roughness 1 }
+                    geometry Capsule { height 0.24 radius 0.05 }
+                  } ] }
+                  HingeJoint {
+                    jointParameters HingeJointParameters { axis 0 1 0 anchor 0 -0.20 1.12 }
+                    device [ RotationalMotor { name "elb_r" maxVelocity 14 minPosition -2.6 maxPosition 0.1 } ]
+                    endPoint Solid {
+                      children [
+                        Transform { translation 0 -0.20 0.98 children [ Shape {
+                          appearance PBRAppearance { baseColor IS skinColor roughness 1 }
+                          geometry Capsule { height 0.22 radius 0.042 }
+                        } ] }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

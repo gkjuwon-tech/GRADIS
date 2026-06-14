@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!-- 세단 (4.6 x 1.85 x 1.45 m) — 야간 도시의 차폐물/배경 차량 -->
+<sdf version="1.9">
+  <model name="car">
+    <static>true</static>
+    <link name="body">
+      <visual name="lower">
+        <pose>0 0 0.55 0 0 0</pose>
+        <geometry><box><size>4.6 1.85 0.7</size></box></geometry>
+        <material><ambient>0.08 0.09 0.12 1</ambient><diffuse>0.16 0.18 0.24 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular></material>
+      </visual>
+      <visual name="cabin">
+        <pose>-0.25 0 1.12 0 0 0</pose>
+        <geometry><box><size>2.3 1.7 0.55</size></box></geometry>
+        <material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.08 0.08 0.1 1</diffuse>
+          <specular>0.4 0.4 0.45 1</specular></material>
+      </visual>
+      <visual name="wheel_fl"><pose>1.45 0.95 0.33 1.5708 0 0</pose>
+        <geometry><cylinder><radius>0.33</radius><length>0.22</length></cylinder></geometry>
+        <material><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      <visual name="wheel_fr"><pose>1.45 -0.95 0.33 1.5708 0 0</pose>
+        <geometry><cylinder><radius>0.33</radius><length>0.22</length></cylinder></geometry>
+        <material><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      <visual name="wheel_bl"><pose>-1.45 0.95 0.33 1.5708 0 0</pose>
+        <geometry><cylinder><radius>0.33</radius><length>0.22</length></cylinder></geometry>
+        <material><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      <visual name="wheel_br"><pose>-1.45 -0.95 0.33 1.5708 0 0</pose>
+        <geometry><cylinder><radius>0.33</radius><length>0.22</length></cylinder></geometry>
+        <material><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      <visual name="taillight_l"><pose>-2.3 0.6 0.7 0 0 0</pose>
+        <geometry><box><size>0.02 0.3 0.12</size></box></geometry>
+        <material><emissive>0.6 0.05 0.02 1</emissive><diffuse>0.5 0.05 0.02 1</diffuse></material></visual>
+      <visual name="taillight_r"><pose>-2.3 -0.6 0.7 0 0 0</pose>
+        <geometry><box><size>0.02 0.3 0.12</size></box></geometry>
+        <material><emissive>0.6 0.05 0.02 1</emissive><diffuse>0.5 0.05 0.02 1</diffuse></material></visual>
+      <collision name="col">
+        <pose>0 0 0.75 0 0 0</pose>
+        <geometry><box><size>4.6 1.85 1.45</size></box></geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

@@ -1,0 +1,5 @@
+commit 92b0cd788ec29406f26c6f9c31d5ceedbd1cc538
+Author: Randy Mackay <rmackay9@yahoo.com>
+Date:   Tue Nov 11 13:54:02 2025 +0900
+
+    Copter: version to 4.6.3 official fix

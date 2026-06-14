@@ -1,0 +1,498 @@
+<?xml version="1.0"?>
+<!--
+  GRADIS 디지털 트윈 — 야간 도시 풀 에디션 (엣지케이스 패키지)
+
+  월드 원점(0,0) = DOCK-A (37.52860, 126.96520). ENU.
+  달빛 + 가로등 빛 웅덩이만 있는 어두운 도시. 군중, 차량, 골목, 차폐.
+
+  == 엣지케이스 카탈로그 (검증 항목과 1:1) ==
+  E1  골목 격투      (28, 28)   빌딩 사이 3.5m 골목, 가로등 없음 — 차폐+저조도.
+                                특정 각도에서만 보임 → VLM이 goto/orbit으로 풀어야 함
+  E2  군중 밀집      (5, 3)     광장에 8인 밀집 클러스터 — CROWD-01 (압사 위험)
+  E3  나무 아래 쓰러짐 (18, -2)   캐노피가 위에서 가림 — 수직 시야 차폐
+  E4  차 뒤의 사람    (12,-13.4) 주차 차량에 하반신 가림 — 부분 검출
+  E5  조거          (순환)      광장 외곽 고속 러닝 — '추격'처럼 보이는 오탐 함정
+  E6  포옹 커플      (0, 14)    정지 근접 2인 — '몸싸움' 오탐 함정
+  E7  벤치 착석      (-5, 10)   앉은 자세 — '쓰러짐' 오탐 함정
+  E8  교차 보행자    (다수)      행인 4명 — 평시 트래픽 (전부 무알람이어야 함)
+  +   광장 개활지 쓰러짐 (12, 9)  기본 DOWN 케이스 (대조용 개활지)
+-->
+<sdf version="1.9">
+  <world name="gradis_city">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <latitude_deg>37.52860</latitude_deg>
+      <longitude_deg>126.96520</longitude_deg>
+      <elevation>38</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+
+    <!-- ===== 밤 ===== -->
+    <scene>
+      <ambient>0.05 0.05 0.07 1</ambient>
+      <background>0.015 0.015 0.03 1</background>
+      <shadows>true</shadows>
+    </scene>
+    <light type="directional" name="moon">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 300 0 0 0</pose>
+      <diffuse>0.10 0.11 0.16 1</diffuse>
+      <specular>0.02 0.02 0.03 1</specular>
+      <direction>0.3 -0.5 -1</direction>
+    </light>
+
+    <!-- ===== 지면 / 광장 / 도로 ===== -->
+    <model name="ground"><static>true</static>
+      <link name="l"><collision name="c">
+          <geometry><plane><normal>0 0 1</normal><size>500 500</size></plane></geometry>
+        </collision>
+        <visual name="v">
+          <geometry><plane><normal>0 0 1</normal><size>500 500</size></plane></geometry>
+          <material><ambient>0.10 0.13 0.09 1</ambient><diffuse>0.12 0.16 0.11 1</diffuse></material>
+        </visual></link>
+    </model>
+    <model name="plaza"><static>true</static><pose>8 6 0.01 0 0 0</pose>
+      <link name="l"><visual name="v">
+          <geometry><box><size>60 44 0.02</size></box></geometry>
+          <material><ambient>0.13 0.13 0.14 1</ambient><diffuse>0.2 0.2 0.21 1</diffuse></material>
+        </visual><collision name="c"><geometry><box><size>60 44 0.02</size></box></geometry></collision></link>
+    </model>
+    <model name="road_ew"><static>true</static><pose>0 -44 0.01 0 0 0</pose>
+      <link name="l"><visual name="v">
+          <geometry><box><size>240 9 0.02</size></box></geometry>
+          <material><diffuse>0.09 0.09 0.1 1</diffuse></material></visual></link>
+    </model>
+    <model name="road_ns"><static>true</static><pose>-52 0 0.01 0 0 0</pose>
+      <link name="l"><visual name="v">
+          <geometry><box><size>9 240 0.02</size></box></geometry>
+          <material><diffuse>0.09 0.09 0.1 1</diffuse></material></visual></link>
+    </model>
+
+    <!-- ===== 빌딩 (창문 불빛 = 도시의 밤) ===== -->
+    <model name="bldg1"><static>true</static><pose>-75 30 14 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>22 18 28</size></box></geometry>
+        <material><diffuse>0.10 0.10 0.11 1</diffuse></material></visual>
+        <visual name="win"><pose>11.05 0 2 0 0 0</pose>
+          <geometry><box><size>0.1 14 18</size></box></geometry>
+          <material><emissive>0.25 0.2 0.1 1</emissive><diffuse>0.3 0.25 0.12 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>22 18 28</size></box></geometry></collision></link></model>
+    <model name="bldg2"><static>true</static><pose>-78 -35 20 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>18 24 40</size></box></geometry>
+        <material><diffuse>0.08 0.09 0.11 1</diffuse></material></visual>
+        <visual name="win"><pose>9.05 0 5 0 0 0</pose>
+          <geometry><box><size>0.1 18 26</size></box></geometry>
+          <material><emissive>0.18 0.20 0.28 1</emissive><diffuse>0.2 0.22 0.3 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>18 24 40</size></box></geometry></collision></link></model>
+    <model name="bldg3"><static>true</static><pose>65 45 11 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>26 20 22</size></box></geometry>
+        <material><diffuse>0.11 0.10 0.09 1</diffuse></material></visual>
+        <visual name="win"><pose>-13.05 0 1 0 0 0</pose>
+          <geometry><box><size>0.1 15 14</size></box></geometry>
+          <material><emissive>0.28 0.22 0.1 1</emissive><diffuse>0.3 0.24 0.12 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>26 20 22</size></box></geometry></collision></link></model>
+    <model name="bldg4"><static>true</static><pose>70 -25 16 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>20 30 32</size></box></geometry>
+        <material><diffuse>0.09 0.09 0.10 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>20 30 32</size></box></geometry></collision></link></model>
+    <model name="bldg5"><static>true</static><pose>10 70 13 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>34 16 26</size></box></geometry>
+        <material><diffuse>0.10 0.10 0.10 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>34 16 26</size></box></geometry></collision></link></model>
+    <model name="bldg6"><static>true</static><pose>-25 -75 9 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>28 18 18</size></box></geometry>
+        <material><diffuse>0.11 0.10 0.10 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>28 18 18</size></box></geometry></collision></link></model>
+    <model name="bldg7"><static>true</static><pose>35 -70 24 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>16 16 48</size></box></geometry>
+        <material><diffuse>0.07 0.08 0.10 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>16 16 48</size></box></geometry></collision></link></model>
+
+    <!-- 순찰존 안쪽 골목 페어 — E1 격투를 가리는 차폐물 -->
+    <model name="bldg8"><static>true</static><pose>22.5 28 9 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>7 14 18</size></box></geometry>
+        <material><diffuse>0.10 0.09 0.09 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>7 14 18</size></box></geometry></collision></link></model>
+    <model name="bldg9"><static>true</static><pose>33.5 28 7 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>7 14 14</size></box></geometry>
+        <material><diffuse>0.11 0.10 0.10 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>7 14 14</size></box></geometry></collision></link></model>
+
+    <!-- ===== 가로등 (빛 웅덩이 — 골목엔 없음) ===== -->
+    <include><uri>model://streetlight</uri><name>sl1</name><pose>-12 -6 0 0 0 0.5</pose></include>
+    <include><uri>model://streetlight</uri><name>sl2</name><pose>24 -6 0 0 0 2.6</pose></include>
+    <include><uri>model://streetlight</uri><name>sl3</name><pose>-12 20 0 0 0 -0.5</pose></include>
+    <include><uri>model://streetlight</uri><name>sl4</name><pose>24 16 0 0 0 -2.6</pose></include>
+    <include><uri>model://streetlight</uri><name>sl5</name><pose>6 -2 0 0 0 1.57</pose></include>
+    <include><uri>model://streetlight</uri><name>sl6</name><pose>-48 -18 0 0 0 0</pose></include>
+    <include><uri>model://streetlight</uri><name>sl7</name><pose>-48 18 0 0 0 0</pose></include>
+    <include><uri>model://streetlight</uri><name>sl8</name><pose>-18 -41 0 0 0 1.57</pose></include>
+    <include><uri>model://streetlight</uri><name>sl9</name><pose>18 -41 0 0 0 1.57</pose></include>
+
+    <!-- ===== 차량 (도로변 주차 + 광장 측면) ===== -->
+    <include><uri>model://car</uri><name>car1</name><pose>-30 -41 0 0 0 0</pose></include>
+    <include><uri>model://car</uri><name>car2</name><pose>-20 -41 0 0 0 0</pose></include>
+    <include><uri>model://car</uri><name>car3</name><pose>-8 -41 0 0 0 3.1416</pose></include>
+    <include><uri>model://car</uri><name>car4</name><pose>4 -41 0 0 0 0</pose></include>
+    <include><uri>model://car</uri><name>car5</name><pose>16 -41 0 0 0 3.1416</pose></include>
+    <include><uri>model://car</uri><name>car6</name><pose>-49 -15 0 0 0 1.5708</pose></include>
+    <include><uri>model://car</uri><name>car7</name><pose>-49 2 0 0 0 1.5708</pose></include>
+    <include><uri>model://car</uri><name>car8</name><pose>-49 17 0 0 0 -1.5708</pose></include>
+    <include><uri>model://car</uri><name>car9</name><pose>5 -13.5 0 0 0 0.1</pose></include>
+    <include><uri>model://car</uri><name>car10</name><pose>12 -12.5 0 0 0 -0.05</pose></include>
+
+    <!-- ===== 나무 ===== -->
+    <model name="tree1"><static>true</static><pose>-8 18 0 0 0 0</pose>
+      <link name="l">
+        <visual name="trunk"><pose>0 0 2 0 0 0</pose>
+          <geometry><cylinder><radius>0.25</radius><length>4</length></cylinder></geometry>
+          <material><diffuse>0.14 0.10 0.07 1</diffuse></material></visual>
+        <visual name="crown"><pose>0 0 5.2 0 0 0</pose>
+          <geometry><sphere><radius>2.6</radius></sphere></geometry>
+          <material><diffuse>0.07 0.12 0.06 1</diffuse></material></visual>
+        <collision name="c"><pose>0 0 3 0 0 0</pose>
+          <geometry><cylinder><radius>0.3</radius><length>6</length></cylinder></geometry></collision>
+      </link></model>
+    <model name="tree2"><static>true</static><pose>28 -6 0 0 0 0</pose>
+      <link name="l">
+        <visual name="trunk"><pose>0 0 1.8 0 0 0</pose>
+          <geometry><cylinder><radius>0.22</radius><length>3.6</length></cylinder></geometry>
+          <material><diffuse>0.14 0.10 0.07 1</diffuse></material></visual>
+        <visual name="crown"><pose>0 0 4.6 0 0 0</pose>
+          <geometry><sphere><radius>2.2</radius></sphere></geometry>
+          <material><diffuse>0.08 0.13 0.07 1</diffuse></material></visual>
+      </link></model>
+    <model name="tree3"><static>true</static><pose>-20 2 0 0 0 0</pose>
+      <link name="l">
+        <visual name="trunk"><pose>0 0 2.2 0 0 0</pose>
+          <geometry><cylinder><radius>0.28</radius><length>4.4</length></cylinder></geometry>
+          <material><diffuse>0.14 0.10 0.07 1</diffuse></material></visual>
+        <visual name="crown"><pose>0 0 5.8 0 0 0</pose>
+          <geometry><sphere><radius>2.9</radius></sphere></geometry>
+          <material><diffuse>0.06 0.11 0.05 1</diffuse></material></visual>
+      </link></model>
+    <!-- E3 차폐목: 이 캐노피 아래에 사람이 쓰러져 있다 -->
+    <model name="tree4"><static>true</static><pose>18 -2 0 0 0 0</pose>
+      <link name="l">
+        <visual name="trunk"><pose>0 0 2 0 0 0</pose>
+          <geometry><cylinder><radius>0.26</radius><length>4</length></cylinder></geometry>
+          <material><diffuse>0.14 0.10 0.07 1</diffuse></material></visual>
+        <visual name="crown"><pose>0 0 5.4 0 0 0</pose>
+          <geometry><sphere><radius>3.1</radius></sphere></geometry>
+          <material><diffuse>0.07 0.12 0.06 1</diffuse></material></visual>
+      </link></model>
+
+    <!-- ===== DJI Dock 3 + M4TD (드론은 도크 패드 위에서 스폰) ===== -->
+    <include><uri>model://dji_dock3</uri><name>dock3_a</name><pose>0 0 0 0 0 0</pose></include>
+    <include><uri>model://m4td</uri><name>m4td</name><pose>0 0 0.50 0 0 0</pose></include>
+
+    <!-- ============================================================
+         사건 / 엣지케이스 액터
+         ============================================================ -->
+
+    <!-- E1: 골목 격투 (가로등 없음, 빌딩 차폐 — 동서 방향에서만 보임) -->
+    <actor name="alley_fighter_a">
+      <pose>28 28.8 1.0 0 0 -1.5708</pose>
+      <skin><filename>../assets/animations/run.dae</filename><scale>1.0</scale></skin>
+      <animation name="agitated"><filename>../assets/animations/run.dae</filename>
+        <interpolate_x>false</interpolate_x></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="agitated">
+          <waypoint><time>0</time><pose>28 29.0 1.0 0 0 -1.5708</pose></waypoint>
+          <waypoint><time>0.8</time><pose>28 28.3 1.0 0 0 -1.5708</pose></waypoint>
+          <waypoint><time>1.6</time><pose>28.2 28.9 1.0 0 0 -1.2</pose></waypoint>
+          <waypoint><time>2.4</time><pose>27.8 28.4 1.0 0 0 -1.9</pose></waypoint>
+          <waypoint><time>3.2</time><pose>28 29.0 1.0 0 0 -1.5708</pose></waypoint>
+        </trajectory></script>
+    </actor>
+    <actor name="alley_fighter_b">
+      <pose>28 27.2 1.0 0 0 1.5708</pose>
+      <skin><filename>../assets/animations/run.dae</filename><scale>1.0</scale></skin>
+      <animation name="agitated"><filename>../assets/animations/run.dae</filename>
+        <interpolate_x>false</interpolate_x></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="agitated">
+          <waypoint><time>0</time><pose>28 27.0 1.0 0 0 1.5708</pose></waypoint>
+          <waypoint><time>0.8</time><pose>28 27.7 1.0 0 0 1.5708</pose></waypoint>
+          <waypoint><time>1.6</time><pose>28.3 27.1 1.0 0 0 1.9</pose></waypoint>
+          <waypoint><time>2.4</time><pose>28 27.6 1.0 0 0 1.2</pose></waypoint>
+          <waypoint><time>3.2</time><pose>28 27.0 1.0 0 0 1.5708</pose></waypoint>
+        </trajectory></script>
+    </actor>
+
+    <!-- E2: 광장 군중 밀집 (6 액터 + 2 정적 = 8인, 4x4m 안에서 진동) -->
+    <actor name="crowd_1"><pose>4 2 1.0 0 0 0.3</pose>
+      <skin><filename>../assets/animations/walk.dae</filename><scale>1.0</scale></skin>
+      <animation name="w"><filename>../assets/animations/walk.dae</filename></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="w">
+          <waypoint><time>0</time><pose>4 2 1.0 0 0 0.3</pose></waypoint>
+          <waypoint><time>3</time><pose>5 2.8 1.0 0 0 1.2</pose></waypoint>
+          <waypoint><time>6</time><pose>4.2 3.5 1.0 0 0 -2.2</pose></waypoint>
+          <waypoint><time>9</time><pose>4 2 1.0 0 0 0.3</pose></waypoint>
+        </trajectory></script></actor>
+    <actor name="crowd_2"><pose>5.5 3 1.0 0 0 2.0</pose>
+      <skin><filename>../assets/animations/walk.dae</filename><scale>1.0</scale></skin>
+      <animation name="w"><filename>../assets/animations/walk.dae</filename></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="w">
+          <waypoint><time>0</time><pose>5.5 3 1.0 0 0 2.0</pose></waypoint>
+          <waypoint><time>3.5</time><pose>6.3 4 1.0 0 0 -0.6</pose></waypoint>
+          <waypoint><time>7</time><pose>5.0 4.4 1.0 0 0 2.8</pose></waypoint>
+          <waypoint><time>10</time><pose>5.5 3 1.0 0 0 2.0</pose></waypoint>
+        </trajectory></script></actor>
+    <actor name="crowd_3"><pose>6.5 1.8 1.0 0 0 -1.0</pose>
+      <skin><filename>../assets/animations/walk.dae</filename><scale>1.0</scale></skin>
+      <animation name="w"><filename>../assets/animations/walk.dae</filename></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="w">
+          <waypoint><time>0</time><pose>6.5 1.8 1.0 0 0 -1.0</pose></waypoint>
+          <waypoint><time>4</time><pose>5.6 2.6 1.0 0 0 1.5</pose></waypoint>
+          <waypoint><time>8</time><pose>6.5 1.8 1.0 0 0 -1.0</pose></waypoint>
+        </trajectory></script></actor>
+    <actor name="crowd_4"><pose>3.2 3.4 1.0 0 0 1.1</pose>
+      <skin><filename>../assets/animations/walk.dae</filename><scale>1.0</scale></skin>
+      <animation name="w"><filename>../assets/animations/walk.dae</filename></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="w">
+          <waypoint><time>0</time><pose>3.2 3.4 1.0 0 0 1.1</pose></waypoint>
+          <waypoint><time>3</time><pose>4.1 4.2 1.0 0 0 -1.8</pose></waypoint>
+          <waypoint><time>6.5</time><pose>3.2 3.4 1.0 0 0 1.1</pose></waypoint>
+        </trajectory></script></actor>
+    <actor name="crowd_5"><pose>5 4.6 1.0 0 0 -2.5</pose>
+      <skin><filename>../assets/animations/walk.dae</filename><scale>1.0</scale></skin>
+      <animation name="w"><filename>../assets/animations/walk.dae</filename></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="w">
+          <waypoint><time>0</time><pose>5 4.6 1.0 0 0 -2.5</pose></waypoint>
+          <waypoint><time>4.5</time><pose>6 3.6 1.0 0 0 0.8</pose></waypoint>
+          <waypoint><time>9</time><pose>5 4.6 1.0 0 0 -2.5</pose></waypoint>
+        </trajectory></script></actor>
+    <actor name="crowd_6"><pose>6.8 4.5 1.0 0 0 2.9</pose>
+      <skin><filename>../assets/animations/walk.dae</filename><scale>1.0</scale></skin>
+      <animation name="w"><filename>../assets/animations/walk.dae</filename></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="w">
+          <waypoint><time>0</time><pose>6.8 4.5 1.0 0 0 2.9</pose></waypoint>
+          <waypoint><time>3.8</time><pose>5.8 5.2 1.0 0 0 -0.9</pose></waypoint>
+          <waypoint><time>7.6</time><pose>6.8 4.5 1.0 0 0 2.9</pose></waypoint>
+        </trajectory></script></actor>
+    <model name="crowd_static_1"><static>true</static><pose>4.6 4.0 0 0 0 0.8</pose>
+      <link name="l">
+        <visual name="torso"><pose>0 0 1.25 0 0 0</pose>
+          <geometry><capsule><radius>0.14</radius><length>0.5</length></capsule></geometry>
+          <material><diffuse>0.30 0.25 0.35 1</diffuse></material></visual>
+        <visual name="head"><pose>0 0 1.68 0 0 0</pose>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><diffuse>0.75 0.58 0.45 1</diffuse></material></visual>
+        <visual name="legs"><pose>0 0 0.55 0 0 0</pose>
+          <geometry><capsule><radius>0.11</radius><length>0.8</length></capsule></geometry>
+          <material><diffuse>0.12 0.13 0.2 1</diffuse></material></visual>
+      </link></model>
+    <model name="crowd_static_2"><static>true</static><pose>5.9 2.2 0 0 0 -1.4</pose>
+      <link name="l">
+        <visual name="torso"><pose>0 0 1.22 0 0 0</pose>
+          <geometry><capsule><radius>0.14</radius><length>0.48</length></capsule></geometry>
+          <material><diffuse>0.4 0.2 0.18 1</diffuse></material></visual>
+        <visual name="head"><pose>0 0 1.64 0 0 0</pose>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><diffuse>0.78 0.6 0.47 1</diffuse></material></visual>
+        <visual name="legs"><pose>0 0 0.54 0 0 0</pose>
+          <geometry><capsule><radius>0.11</radius><length>0.78</length></capsule></geometry>
+          <material><diffuse>0.15 0.15 0.17 1</diffuse></material></visual>
+      </link></model>
+
+    <!-- E3: 나무 아래 쓰러진 사람 (캐노피 차폐) -->
+    <model name="person_down_tree"><static>true</static><pose>18 -2.6 0.12 0 1.5708 1.1</pose>
+      <link name="l">
+        <visual name="torso"><geometry><capsule><radius>0.14</radius><length>0.5</length></capsule></geometry>
+          <material><diffuse>0.35 0.32 0.2 1</diffuse></material></visual>
+        <visual name="head"><pose>0 0 0.42 0 0 0</pose>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><diffuse>0.75 0.58 0.45 1</diffuse></material></visual>
+        <visual name="legs"><pose>0 0.04 -0.55 0 0.12 0</pose>
+          <geometry><capsule><radius>0.1</radius><length>0.7</length></capsule></geometry>
+          <material><diffuse>0.14 0.16 0.22 1</diffuse></material></visual>
+      </link></model>
+
+    <!-- 개활지 쓰러짐 (대조용 기본 DOWN — 가로등 sl5 근처라 보임) -->
+    <model name="person_down_open"><static>true</static><pose>12 9 0.12 0 1.5708 0.6</pose>
+      <link name="l">
+        <visual name="torso"><geometry><capsule><radius>0.14</radius><length>0.5</length></capsule></geometry>
+          <material><diffuse>0.55 0.30 0.25 1</diffuse></material></visual>
+        <visual name="head"><pose>0 0 0.42 0 0 0</pose>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><diffuse>0.85 0.65 0.52 1</diffuse></material></visual>
+        <visual name="legs"><pose>0 0.02 -0.55 0 0.12 0</pose>
+          <geometry><capsule><radius>0.1</radius><length>0.7</length></capsule></geometry>
+          <material><diffuse>0.18 0.20 0.32 1</diffuse></material></visual>
+      </link></model>
+
+    <!-- E4: 주차 차량 뒤에 하반신 가린 사람 (car10 옆) -->
+    <model name="person_behind_car"><static>true</static><pose>12 -14.6 0 0 0 1.5708</pose>
+      <link name="l">
+        <visual name="torso"><pose>0 0 1.25 0 0 0</pose>
+          <geometry><capsule><radius>0.14</radius><length>0.5</length></capsule></geometry>
+          <material><diffuse>0.2 0.35 0.3 1</diffuse></material></visual>
+        <visual name="head"><pose>0 0 1.68 0 0 0</pose>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><diffuse>0.78 0.6 0.47 1</diffuse></material></visual>
+        <visual name="legs"><pose>0 0 0.55 0 0 0</pose>
+          <geometry><capsule><radius>0.11</radius><length>0.8</length></capsule></geometry>
+          <material><diffuse>0.1 0.1 0.12 1</diffuse></material></visual>
+      </link></model>
+
+    <!-- E5: 조거 — 광장 외곽 고속 순환 (추격 오탐 함정) -->
+    <actor name="jogger">
+      <pose>-18 -10 1.0 0 0 0</pose>
+      <skin><filename>../assets/animations/run.dae</filename><scale>1.0</scale></skin>
+      <animation name="run"><filename>../assets/animations/run.dae</filename>
+        <interpolate_x>true</interpolate_x></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="run">
+          <waypoint><time>0</time><pose>-18 -10 1.0 0 0 0</pose></waypoint>
+          <waypoint><time>11</time><pose>30 -10 1.0 0 0 0</pose></waypoint>
+          <waypoint><time>12</time><pose>30 -10 1.0 0 0 1.5708</pose></waypoint>
+          <waypoint><time>19</time><pose>30 22 1.0 0 0 1.5708</pose></waypoint>
+          <waypoint><time>20</time><pose>30 22 1.0 0 0 3.1416</pose></waypoint>
+          <waypoint><time>31</time><pose>-18 22 1.0 0 0 3.1416</pose></waypoint>
+          <waypoint><time>32</time><pose>-18 22 1.0 0 0 -1.5708</pose></waypoint>
+          <waypoint><time>39</time><pose>-18 -10 1.0 0 0 -1.5708</pose></waypoint>
+          <waypoint><time>40</time><pose>-18 -10 1.0 0 0 0</pose></waypoint>
+        </trajectory></script>
+    </actor>
+
+    <!-- E6: 포옹 커플 (정지 근접 — 몸싸움 오탐 함정) -->
+    <model name="hugger_a"><static>true</static><pose>0 14 0 0 0.12 1.5708</pose>
+      <link name="l">
+        <visual name="torso"><pose>0 0 1.22 0 0 0</pose>
+          <geometry><capsule><radius>0.14</radius><length>0.5</length></capsule></geometry>
+          <material><diffuse>0.45 0.25 0.3 1</diffuse></material></visual>
+        <visual name="head"><pose>0 0.06 1.66 0 0 0</pose>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><diffuse>0.8 0.62 0.48 1</diffuse></material></visual>
+        <visual name="legs"><pose>0 0 0.54 0 0 0</pose>
+          <geometry><capsule><radius>0.11</radius><length>0.78</length></capsule></geometry>
+          <material><diffuse>0.16 0.16 0.2 1</diffuse></material></visual>
+        <visual name="arm"><pose>0 0.22 1.3 -1.2 0 0</pose>
+          <geometry><capsule><radius>0.045</radius><length>0.5</length></capsule></geometry>
+          <material><diffuse>0.45 0.25 0.3 1</diffuse></material></visual>
+      </link></model>
+    <model name="hugger_b"><static>true</static><pose>0 14.45 0 0 -0.12 -1.5708</pose>
+      <link name="l">
+        <visual name="torso"><pose>0 0 1.18 0 0 0</pose>
+          <geometry><capsule><radius>0.13</radius><length>0.46</length></capsule></geometry>
+          <material><diffuse>0.25 0.3 0.42 1</diffuse></material></visual>
+        <visual name="head"><pose>0 0.06 1.6 0 0 0</pose>
+          <geometry><sphere><radius>0.095</radius></sphere></geometry>
+          <material><diffuse>0.82 0.64 0.5 1</diffuse></material></visual>
+        <visual name="legs"><pose>0 0 0.52 0 0 0</pose>
+          <geometry><capsule><radius>0.1</radius><length>0.76</length></capsule></geometry>
+          <material><diffuse>0.2 0.18 0.16 1</diffuse></material></visual>
+        <visual name="arm"><pose>0 0.2 1.28 -1.3 0 0</pose>
+          <geometry><capsule><radius>0.042</radius><length>0.48</length></capsule></geometry>
+          <material><diffuse>0.25 0.3 0.42 1</diffuse></material></visual>
+      </link></model>
+
+    <!-- E7: 벤치에 앉은 사람 (쓰러짐 오탐 함정) -->
+    <model name="bench"><static>true</static><pose>-5 10 0 0 0 0</pose>
+      <link name="l">
+        <visual name="seat"><pose>0 0 0.45 0 0 0</pose>
+          <geometry><box><size>1.6 0.45 0.06</size></box></geometry>
+          <material><diffuse>0.25 0.18 0.1 1</diffuse></material></visual>
+        <visual name="back"><pose>0 -0.22 0.75 0.25 0 0</pose>
+          <geometry><box><size>1.6 0.05 0.5</size></box></geometry>
+          <material><diffuse>0.25 0.18 0.1 1</diffuse></material></visual>
+        <visual name="leg1"><pose>0.7 0 0.22 0 0 0</pose>
+          <geometry><box><size>0.06 0.4 0.44</size></box></geometry>
+          <material><diffuse>0.1 0.1 0.1 1</diffuse></material></visual>
+        <visual name="leg2"><pose>-0.7 0 0.22 0 0 0</pose>
+          <geometry><box><size>0.06 0.4 0.44</size></box></geometry>
+          <material><diffuse>0.1 0.1 0.1 1</diffuse></material></visual>
+      </link></model>
+    <model name="person_sitting"><static>true</static><pose>-5 10.05 0 0 0 -1.5708</pose>
+      <link name="l">
+        <visual name="torso"><pose>0 0 0.85 0.25 0 0</pose>
+          <geometry><capsule><radius>0.14</radius><length>0.46</length></capsule></geometry>
+          <material><diffuse>0.3 0.34 0.28 1</diffuse></material></visual>
+        <visual name="head"><pose>0 0.05 1.28 0 0 0</pose>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><diffuse>0.78 0.6 0.47 1</diffuse></material></visual>
+        <visual name="thigh"><pose>0 0.22 0.5 1.5708 0 0</pose>
+          <geometry><capsule><radius>0.09</radius><length>0.4</length></capsule></geometry>
+          <material><diffuse>0.15 0.16 0.2 1</diffuse></material></visual>
+        <visual name="shin"><pose>0 0.42 0.25 0.15 0 0</pose>
+          <geometry><capsule><radius>0.06</radius><length>0.42</length></capsule></geometry>
+          <material><diffuse>0.15 0.16 0.2 1</diffuse></material></visual>
+      </link></model>
+
+    <!-- E8: 교차 보행자 4명 (평시 트래픽 — 전부 무알람) -->
+    <actor name="ped_1">
+      <pose>-12 -9 1.0 0 0 0</pose>
+      <skin><filename>../assets/animations/walk.dae</filename><scale>1.0</scale></skin>
+      <animation name="w"><filename>../assets/animations/walk.dae</filename>
+        <interpolate_x>true</interpolate_x></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="w">
+          <waypoint><time>0</time><pose>-12 -9 1.0 0 0 0</pose></waypoint>
+          <waypoint><time>14</time><pose>2 -9 1.0 0 0 0</pose></waypoint>
+          <waypoint><time>15</time><pose>2 -9 1.0 0 0 3.1416</pose></waypoint>
+          <waypoint><time>29</time><pose>-12 -9 1.0 0 0 3.1416</pose></waypoint>
+          <waypoint><time>30</time><pose>-12 -9 1.0 0 0 0</pose></waypoint>
+        </trajectory></script>
+    </actor>
+    <actor name="ped_2">
+      <pose>-2 22 1.0 0 0 -1.2</pose>
+      <skin><filename>../assets/animations/walk.dae</filename><scale>1.0</scale></skin>
+      <animation name="w"><filename>../assets/animations/walk.dae</filename>
+        <interpolate_x>true</interpolate_x></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="w">
+          <waypoint><time>0</time><pose>-2 22 1.0 0 0 -1.2</pose></waypoint>
+          <waypoint><time>16</time><pose>4 4 1.0 0 0 -1.2</pose></waypoint>
+          <waypoint><time>17</time><pose>4 4 1.0 0 0 1.95</pose></waypoint>
+          <waypoint><time>33</time><pose>-2 22 1.0 0 0 1.95</pose></waypoint>
+          <waypoint><time>34</time><pose>-2 22 1.0 0 0 -1.2</pose></waypoint>
+        </trajectory></script>
+    </actor>
+    <actor name="ped_3">
+      <pose>20 14 1.0 0 0 3.1416</pose>
+      <skin><filename>../assets/animations/walk.dae</filename><scale>1.0</scale></skin>
+      <animation name="w"><filename>../assets/animations/walk.dae</filename>
+        <interpolate_x>true</interpolate_x></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="w">
+          <waypoint><time>0</time><pose>20 14 1.0 0 0 3.1416</pose></waypoint>
+          <waypoint><time>18</time><pose>-6 14 1.0 0 0 3.1416</pose></waypoint>
+          <waypoint><time>19</time><pose>-6 14 1.0 0 0 0</pose></waypoint>
+          <waypoint><time>37</time><pose>20 14 1.0 0 0 0</pose></waypoint>
+          <waypoint><time>38</time><pose>20 14 1.0 0 0 3.1416</pose></waypoint>
+        </trajectory></script>
+    </actor>
+    <actor name="ped_4">
+      <pose>-46 -10 1.0 0 0 1.5708</pose>
+      <skin><filename>../assets/animations/walk.dae</filename><scale>1.0</scale></skin>
+      <animation name="w"><filename>../assets/animations/walk.dae</filename>
+        <interpolate_x>true</interpolate_x></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="w">
+          <waypoint><time>0</time><pose>-46 -10 1.0 0 0 1.5708</pose></waypoint>
+          <waypoint><time>20</time><pose>-46 14 1.0 0 0 1.5708</pose></waypoint>
+          <waypoint><time>21</time><pose>-46 14 1.0 0 0 -1.5708</pose></waypoint>
+          <waypoint><time>41</time><pose>-46 -10 1.0 0 0 -1.5708</pose></waypoint>
+          <waypoint><time>42</time><pose>-46 -10 1.0 0 0 1.5708</pose></waypoint>
+        </trajectory></script>
+    </actor>
+  </world>
+</sdf>

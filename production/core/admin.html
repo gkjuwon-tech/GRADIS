@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GRADIS // CONTROL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* 개투박. Hacker News 영혼계승. CSS 최소. 노란색만 사수. */
+body{font-family:Verdana,Geneva,sans-serif;font-size:13px;margin:0;background:#f6f6ef;color:#000}
+a{color:#000}
+#bar{background:#dcc04a;padding:4px 8px;font-weight:bold}
+#bar .sig{letter-spacing:3px}
+#bar .dot{float:right;font-weight:normal}
+.wrap{padding:6px 8px}
+h2{font-size:13px;margin:14px 0 4px;border-bottom:1px solid #000;padding-bottom:2px}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:2px 6px;vertical-align:top;font-size:12px}
+th{border-bottom:1px solid #000;font-size:11px;text-transform:uppercase;color:#555}
+tr.inc{border-bottom:1px solid #ddd}
+tr.flash{background:#dcc04a}
+.risk-hi{color:#a00;font-weight:bold}
+.risk-md{color:#b85c00;font-weight:bold}
+.kind{font-weight:bold}
+.ack{background:#dcc04a;border:1px solid #b59b1f;cursor:pointer;font-size:11px;padding:0 4px}
+.muted{color:#777}
+.OPEN{}
+.ACK{opacity:.45}
+img.clip{height:54px;border:1px solid #999;display:block}
+.batt{font-weight:bold}
+.b-lo{color:#a00}
+code{background:#eee;padding:0 3px}
+</style>
+</head>
+<body>
+<div id="bar"><span class="sig">G R A D I S</span> &nbsp;// CONTROL CENTER
+  <span class="dot">stream: <b id="conn">connecting…</b></span></div>
+
+<div class="wrap">
+
+  <h2>FLEET &nbsp;<span class="muted" id="fleetcount"></span></h2>
+  <table id="fleet">
+    <thead><tr><th>node</th><th>type</th><th>state</th><th>batt</th><th>lat,lon</th><th>last seen</th></tr></thead>
+    <tbody id="fleetbody"><tr><td colspan="6" class="muted">no nodes reporting…</td></tr></tbody>
+  </table>
+
+  <h2>INCIDENTS &nbsp;<span class="muted">(live)</span></h2>
+  <table id="inc">
+    <thead><tr>
+      <th>#</th><th>time</th><th>type</th><th>risk</th><th>conf</th>
+      <th>location</th><th>drone</th><th>clip</th><th>status</th><th></th>
+    </tr></thead>
+    <tbody id="incbody"><tr><td colspan="10" class="muted">waiting for incidents…</td></tr></tbody>
+  </table>
+
+  <p class="muted" style="margin-top:16px;font-size:11px">
+    GRADIS Core — on-device inference, cloud is just the mailman.
+    Original footage arrives <b>only</b> when risk is detected; otherwise it never leaves the drone's RAM.
+    <code>GET /api/events</code> · <code>POST /api/ingest</code>
+  </p>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+﻿{
+  "platform": {
+    "name": "M4TD Digital Twin (SITL standin)",
+    "note": "시뮬 전용 설정. 실기체(M4TD)의 자율 스택은 비공개라, 디지털 트윈에서는 ArduPilot SITL + mavlink_companion이 '자율 순찰 + 툴 실행' 역할을 대역한다. 실기체 설정은 config/m4td.json.",
+    "weight_g": 1850,
+    "mtow_g": 2090,
+    "max_flight_time_min": 54
+  },
+  "runtime": {
+    "node_id": "GRADIS-M4TD-01",
+    "core_url": "http://127.0.0.1:8088",
+    "video_source": {
+      "type": "rtsp",
+      "url": "rtsp://127.0.0.1:8554/m4td"
+    },
+    "pose": {
+      "backend": "topview",
+      "detector_model": "yolo11x.pt",
+      "detector_confidence": 0.25,
+      "detector_iou": 0.5,
+      "tracker": "botsort.yaml",
+      "imgsz": 1280,
+      "tiles": 1,
+      "pose_preset": "rtmpose-m",
+      "quality_preset": "vitpose-s",
+      "skeleton_format": "GRADIS-25"
+    },
+    "vlm": {
+      "backend": "ollama",
+      "model": "qwen2.5vl:7b",
+      "host": "http://localhost:11434",
+      "interval_s": 1.0,
+      "risk_threshold": 0.6,
+      "avatar": true,
+      "avatar_glb": "assets3d/Xbot.glb"
+    }
+  },
+  "mission": {
+    "takeoff_alt_m": 40,
+    "patrol": [
+      { "lat": 37.52830, "lon": 126.96480, "alt_m": 40 },
+      { "lat": 37.52830, "lon": 126.96560, "alt_m": 40 },
+      { "lat": 37.52890, "lon": 126.96560, "alt_m": 40 },
+      { "lat": 37.52890, "lon": 126.96480, "alt_m": 40 }
+    ],
+    "charging_docks": [
+      {
+        "node_id": "DOCK3-A",
+        "lat": 37.52860,
+        "lon": 126.96520,
+        "notes": "DJI Dock 3 디지털 트윈 — 월드 원점."
+      }
+    ],
+    "safety": {
+      "low_battery_pct": 30,
+      "critical_battery_pct": 18,
+      "redeploy_battery_pct": 92,
+      "dock_approach_alt_m": 15,
+      "waypoint_reach_tolerance_m": 4,
+      "max_charge_wait_s": 7200,
+      "human_standoff_m": 8,
+      "geofence_radius_m": 300,
+      "mavlink_timeout_s": 5,
+      "privacy_mode": "redact_people_before_vlm + avatar"
+    }
+  }
+}

@@ -1,0 +1,222 @@
+<?xml version="1.0"?>
+<!--
+  GRADIS 디지털 트윈 — 도시 순찰 구역 (Gazebo Harmonic)
+
+  월드 원점(0,0) = DOCK3-A = config/m4td_sim.json의 도크 좌표 (37.52860, 126.96520).
+  좌표계 ENU. 순찰 사각형(config patrol)은 x∈[-44,+35], y∈[-33,+33] 부근.
+
+  액터:
+    (15, 12)   몸싸움 2인 — 제자리 러닝/제스처 애니메이션 + 맞붙는 궤적 안무
+    (12, 9)    쓰러져 미동 없는 사람 (정적 메시 — DOWN/의식소실 시나리오)
+    (-12, -9)  걸어다니는 행인 (대조군 — 얘 보고 알람 울리면 오탐)
+  애니메이션 DAE는 scripts/fetch_assets.sh 로 받아온다 (Gazebo Fuel 표준 액터).
+-->
+<sdf version="1.9">
+  <world name="gradis_city">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <latitude_deg>37.52860</latitude_deg>
+      <longitude_deg>126.96520</longitude_deg>
+      <elevation>38</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+
+    <scene>
+      <ambient>0.55 0.55 0.6 1</ambient>
+      <background>0.62 0.74 0.91 1</background>
+      <shadows>true</shadows>
+    </scene>
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 200 0 0 0</pose>
+      <diffuse>0.95 0.92 0.85 1</diffuse>
+      <direction>-0.4 -0.5 -1</direction>
+    </light>
+
+    <!-- ===== 지면 / 광장 / 도로 ===== -->
+    <model name="ground"><static>true</static>
+      <link name="l"><collision name="c">
+          <geometry><plane><normal>0 0 1</normal><size>500 500</size></plane></geometry>
+        </collision>
+        <visual name="v">
+          <geometry><plane><normal>0 0 1</normal><size>500 500</size></plane></geometry>
+          <material><ambient>0.30 0.42 0.24 1</ambient><diffuse>0.32 0.44 0.26 1</diffuse></material>
+        </visual></link>
+    </model>
+    <model name="plaza"><static>true</static><pose>8 6 0.01 0 0 0</pose>
+      <link name="l"><visual name="v">
+          <geometry><box><size>60 44 0.02</size></box></geometry>
+          <material><diffuse>0.42 0.42 0.44 1</diffuse></material>
+        </visual><collision name="c"><geometry><box><size>60 44 0.02</size></box></geometry></collision></link>
+    </model>
+    <model name="road_ew"><static>true</static><pose>0 -44 0.01 0 0 0</pose>
+      <link name="l"><visual name="v">
+          <geometry><box><size>240 9 0.02</size></box></geometry>
+          <material><diffuse>0.22 0.22 0.24 1</diffuse></material></visual></link>
+    </model>
+    <model name="road_ns"><static>true</static><pose>-52 0 0.01 0 0 0</pose>
+      <link name="l"><visual name="v">
+          <geometry><box><size>9 240 0.02</size></box></geometry>
+          <material><diffuse>0.22 0.22 0.24 1</diffuse></material></visual></link>
+    </model>
+
+    <!-- ===== 빌딩 스카이라인 (순찰 사각형 바깥) ===== -->
+    <model name="bldg1"><static>true</static><pose>-75 30 14 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>22 18 28</size></box></geometry>
+        <material><diffuse>0.55 0.52 0.48 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>22 18 28</size></box></geometry></collision></link></model>
+    <model name="bldg2"><static>true</static><pose>-78 -35 20 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>18 24 40</size></box></geometry>
+        <material><diffuse>0.35 0.42 0.50 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>18 24 40</size></box></geometry></collision></link></model>
+    <model name="bldg3"><static>true</static><pose>65 45 11 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>26 20 22</size></box></geometry>
+        <material><diffuse>0.62 0.48 0.40 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>26 20 22</size></box></geometry></collision></link></model>
+    <model name="bldg4"><static>true</static><pose>70 -25 16 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>20 30 32</size></box></geometry>
+        <material><diffuse>0.50 0.50 0.55 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>20 30 32</size></box></geometry></collision></link></model>
+    <model name="bldg5"><static>true</static><pose>10 70 13 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>34 16 26</size></box></geometry>
+        <material><diffuse>0.58 0.55 0.50 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>34 16 26</size></box></geometry></collision></link></model>
+    <model name="bldg6"><static>true</static><pose>-25 -75 9 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>28 18 18</size></box></geometry>
+        <material><diffuse>0.66 0.60 0.52 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>28 18 18</size></box></geometry></collision></link></model>
+    <model name="bldg7"><static>true</static><pose>35 -70 24 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>16 16 48</size></box></geometry>
+        <material><diffuse>0.30 0.36 0.44 1</diffuse></material></visual>
+        <collision name="c"><geometry><box><size>16 16 48</size></box></geometry></collision></link></model>
+
+    <!-- ===== 나무 (VLM 항법 판단용 장애물) ===== -->
+    <model name="tree1"><static>true</static><pose>-8 18 0 0 0 0</pose>
+      <link name="l">
+        <visual name="trunk"><pose>0 0 2 0 0 0</pose>
+          <geometry><cylinder><radius>0.25</radius><length>4</length></cylinder></geometry>
+          <material><diffuse>0.36 0.25 0.16 1</diffuse></material></visual>
+        <visual name="crown"><pose>0 0 5.2 0 0 0</pose>
+          <geometry><sphere><radius>2.6</radius></sphere></geometry>
+          <material><diffuse>0.22 0.38 0.18 1</diffuse></material></visual>
+        <collision name="c"><pose>0 0 3 0 0 0</pose>
+          <geometry><cylinder><radius>0.3</radius><length>6</length></cylinder></geometry></collision>
+      </link></model>
+    <model name="tree2"><static>true</static><pose>28 -6 0 0 0 0</pose>
+      <link name="l">
+        <visual name="trunk"><pose>0 0 1.8 0 0 0</pose>
+          <geometry><cylinder><radius>0.22</radius><length>3.6</length></cylinder></geometry>
+          <material><diffuse>0.36 0.25 0.16 1</diffuse></material></visual>
+        <visual name="crown"><pose>0 0 4.6 0 0 0</pose>
+          <geometry><sphere><radius>2.2</radius></sphere></geometry>
+          <material><diffuse>0.25 0.42 0.20 1</diffuse></material></visual>
+      </link></model>
+    <model name="tree3"><static>true</static><pose>-20 2 0 0 0 0</pose>
+      <link name="l">
+        <visual name="trunk"><pose>0 0 2.2 0 0 0</pose>
+          <geometry><cylinder><radius>0.28</radius><length>4.4</length></cylinder></geometry>
+          <material><diffuse>0.36 0.25 0.16 1</diffuse></material></visual>
+        <visual name="crown"><pose>0 0 5.8 0 0 0</pose>
+          <geometry><sphere><radius>2.9</radius></sphere></geometry>
+          <material><diffuse>0.20 0.36 0.16 1</diffuse></material></visual>
+      </link></model>
+
+    <!-- ===== DJI Dock 3 + M4TD (드론은 도크 패드 위에서 스폰) ===== -->
+    <include>
+      <uri>model://dji_dock3</uri>
+      <name>dock3_a</name>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>model://m4td</uri>
+      <name>m4td</name>
+      <pose>0 0 0.50 0 0 0</pose>
+    </include>
+
+    <!-- ===== 액터: 몸싸움 2인 =====
+         애니메이션: scripts/fetch_assets.sh 가 받아오는 표준 액터 DAE.
+         (고품질 업그레이드: Mixamo 격투 FBX→DAE 변환 후 파일 교체)
+         안무: 서로 맞붙었다 밀려났다 반복 — 거리 급변 + 고에너지 제스처. -->
+    <actor name="fighter_a">
+      <pose>15 12.8 1.0 0 0 -1.5708</pose>
+      <skin><filename>../assets/animations/run.dae</filename><scale>1.0</scale></skin>
+      <animation name="agitated"><filename>../assets/animations/run.dae</filename>
+        <interpolate_x>false</interpolate_x></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="agitated">
+          <waypoint><time>0</time><pose>15 13.0 1.0 0 0 -1.5708</pose></waypoint>
+          <waypoint><time>0.8</time><pose>15 12.3 1.0 0 0 -1.5708</pose></waypoint>
+          <waypoint><time>1.6</time><pose>15 12.9 1.0 0 0 -1.2</pose></waypoint>
+          <waypoint><time>2.4</time><pose>14.7 12.4 1.0 0 0 -1.9</pose></waypoint>
+          <waypoint><time>3.2</time><pose>15 13.0 1.0 0 0 -1.5708</pose></waypoint>
+        </trajectory>
+      </script>
+    </actor>
+    <actor name="fighter_b">
+      <pose>15 11.2 1.0 0 0 1.5708</pose>
+      <skin><filename>../assets/animations/run.dae</filename><scale>1.0</scale></skin>
+      <animation name="agitated"><filename>../assets/animations/run.dae</filename>
+        <interpolate_x>false</interpolate_x></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="agitated">
+          <waypoint><time>0</time><pose>15 11.0 1.0 0 0 1.5708</pose></waypoint>
+          <waypoint><time>0.8</time><pose>15 11.7 1.0 0 0 1.5708</pose></waypoint>
+          <waypoint><time>1.6</time><pose>15.3 11.1 1.0 0 0 1.9</pose></waypoint>
+          <waypoint><time>2.4</time><pose>15 11.6 1.0 0 0 1.2</pose></waypoint>
+          <waypoint><time>3.2</time><pose>15 11.0 1.0 0 0 1.5708</pose></waypoint>
+        </trajectory>
+      </script>
+    </actor>
+
+    <!-- ===== 쓰러져 미동 없는 사람 (DOWN 시나리오 — 정적) ===== -->
+    <model name="person_down"><static>true</static><pose>12 9 0.12 0 1.5708 0.6</pose>
+      <link name="l">
+        <visual name="torso"><geometry><capsule><radius>0.14</radius><length>0.5</length></capsule></geometry>
+          <material><diffuse>0.55 0.30 0.25 1</diffuse></material></visual>
+        <visual name="head"><pose>0 0 0.42 0 0 0</pose>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><diffuse>0.85 0.65 0.52 1</diffuse></material></visual>
+        <visual name="leg_l"><pose>0.07 0.05 -0.55 0 0.15 0</pose>
+          <geometry><capsule><radius>0.06</radius><length>0.55</length></capsule></geometry>
+          <material><diffuse>0.18 0.20 0.32 1</diffuse></material></visual>
+        <visual name="leg_r"><pose>-0.07 -0.03 -0.55 0 -0.1 0</pose>
+          <geometry><capsule><radius>0.06</radius><length>0.55</length></capsule></geometry>
+          <material><diffuse>0.18 0.20 0.32 1</diffuse></material></visual>
+        <visual name="arm_l"><pose>0.2 0.1 0.1 0.4 0 0</pose>
+          <geometry><capsule><radius>0.045</radius><length>0.45</length></capsule></geometry>
+          <material><diffuse>0.55 0.30 0.25 1</diffuse></material></visual>
+        <visual name="arm_r"><pose>-0.2 -0.05 0.1 -0.5 0 0</pose>
+          <geometry><capsule><radius>0.045</radius><length>0.45</length></capsule></geometry>
+          <material><diffuse>0.55 0.30 0.25 1</diffuse></material></visual>
+      </link></model>
+
+    <!-- ===== 행인 (대조군) ===== -->
+    <actor name="bystander">
+      <pose>-12 -9 1.0 0 0 0</pose>
+      <skin><filename>../assets/animations/walk.dae</filename><scale>1.0</scale></skin>
+      <animation name="walking"><filename>../assets/animations/walk.dae</filename>
+        <interpolate_x>true</interpolate_x></animation>
+      <script><loop>true</loop><auto_start>true</auto_start>
+        <trajectory id="0" type="walking">
+          <waypoint><time>0</time><pose>-12 -9 1.0 0 0 0</pose></waypoint>
+          <waypoint><time>14</time><pose>2 -9 1.0 0 0 0</pose></waypoint>
+          <waypoint><time>15</time><pose>2 -9 1.0 0 0 3.1416</pose></waypoint>
+          <waypoint><time>29</time><pose>-12 -9 1.0 0 0 3.1416</pose></waypoint>
+          <waypoint><time>30</time><pose>-12 -9 1.0 0 0 0</pose></waypoint>
+        </trajectory>
+      </script>
+    </actor>
+  </world>
+</sdf>

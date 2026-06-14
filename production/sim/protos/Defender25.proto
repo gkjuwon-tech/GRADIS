@@ -1,0 +1,79 @@
+#VRML_SIM R2025a utf8
+# GRADIS — iFlight Defender 25 디지털 트윈 (시각 모델)
+#
+# 치수는 실기 기준: 2.5인치 시네훕급, 휠베이스 ~115mm, 덕트 프로펠러 4개,
+# 상부에 DJI O4 카메라 포드. 전체 ~170g 외형.
+#
+# 물리는 여기서 돌지 않는다 — 비행역학은 ArduCopter SITL(진짜 펌웨어)이 계산하고,
+# gradis_drone 컨트롤러(Supervisor)가 SITL 텔레메트리 포즈를 이 노드에 미러링한다.
+# 그래서 physics 없음(키네마틱). '움직임은 펌웨어가 정의한다'가 디지털 트윈의 원칙.
+#
+# 시각 메시 업그레이드: Sketchfab 등에서 FPV 시네훕 .obj/.dae를 받아
+# body Slot의 Shape들을 CadShape로 교체하면 된다 (README_SIM.md 참조).
+
+PROTO Defender25 [
+  field SFVec3f    translation  0 0 0.1
+  field SFRotation rotation     0 0 1 0
+  field SFString   name         "defender25"
+  field SFString   controller   "gradis_drone"
+  field MFString   controllerArgs []
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    name IS name
+    controller IS controller
+    controllerArgs IS controllerArgs
+    supervisor TRUE
+    children [
+      # ---- 메인 프레임 (탑플레이트) ----
+      Shape {
+        appearance PBRAppearance { baseColor 0.15 0.15 0.17 roughness 0.6 metalness 0.2 }
+        geometry Box { size 0.115 0.115 0.02 }
+      }
+      # ---- 4 덕트 (시네훕 시그니처) ----
+      Transform { translation 0.0575 0.0575 0 children [ Shape {
+        appearance PBRAppearance { baseColor 0.86 0.75 0.29 roughness 0.8 }
+        geometry Cylinder { height 0.025 radius 0.034 }
+      } ] }
+      Transform { translation -0.0575 0.0575 0 children [ Shape {
+        appearance PBRAppearance { baseColor 0.86 0.75 0.29 roughness 0.8 }
+        geometry Cylinder { height 0.025 radius 0.034 }
+      } ] }
+      Transform { translation 0.0575 -0.0575 0 children [ Shape {
+        appearance PBRAppearance { baseColor 0.86 0.75 0.29 roughness 0.8 }
+        geometry Cylinder { height 0.025 radius 0.034 }
+      } ] }
+      Transform { translation -0.0575 -0.0575 0 children [ Shape {
+        appearance PBRAppearance { baseColor 0.86 0.75 0.29 roughness 0.8 }
+        geometry Cylinder { height 0.025 radius 0.034 }
+      } ] }
+      # ---- 배터리 (4S 550mAh, 상부) ----
+      Transform { translation 0 0 0.018 children [ Shape {
+        appearance PBRAppearance { baseColor 0.1 0.1 0.1 roughness 0.9 }
+        geometry Box { size 0.06 0.03 0.018 }
+      } ] }
+      # ---- O4 카메라 포드 (전방) ----
+      Transform { translation 0.055 0 0.005 children [ Shape {
+        appearance PBRAppearance { baseColor 0.05 0.05 0.05 roughness 0.3 metalness 0.5 }
+        geometry Box { size 0.022 0.024 0.02 }
+      } ] }
+      # ---- 감시 카메라 (전방 하향 55° 틸트 — 순찰 시야) ----
+      Camera {
+        name "camera"
+        translation 0.055 0 -0.005
+        rotation 0 1 0 0.96   # 전방에서 아래로 ~55도
+        fieldOfView 1.15
+        width 640
+        height 360
+        far 500
+      }
+      # ---- 상태 LED ----
+      Transform { translation -0.05 0 0.012 children [ Shape {
+        appearance PBRAppearance { baseColor 1 0.85 0.1 emissiveColor 0.9 0.75 0.1 }
+        geometry Sphere { radius 0.004 }
+      } ] }
+    ]
+  }
+}
